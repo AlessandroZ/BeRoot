@@ -194,9 +194,9 @@ Other possible misconfigurations
 
 Other tests are realized to check if it's possible to: 
 * Modify an existing service
-* Creation a new service
+* Create a new service
 * Modify a startup key (on HKLM)
-* Modify files where scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
+* Modify directory where all scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
 
 Special thanks
 ----
