@@ -33,8 +33,8 @@ Note: BeRoot realized these checks on every service path, scheduled tasks and st
 __How to exploit__: \
 \
 The vulnerable path runs as: 
-* a service: create a malicious service (or compile the service template)
-* a classic executable: Create your own executable. 
+* _a service_: create a malicious service (or compile the service template)
+* _a classic executable_: Create your own executable. 
 
  Writeable directory
 ----
