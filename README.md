@@ -1,5 +1,4 @@
 # BeRoot
-Windows Privilege Escalation Tool
 
 
 Path containing space without quotes
@@ -17,7 +16,7 @@ C:\Program Files\Some.exe
 C:\Program Files\Some Folder\binary.exe
 ```
 
-Following this example, if "C:\\" folder is writeable, it would be possible to create a malicious executable binary called "Program.exe". If "binary.exe" run with high privilege, it could be a good way to escalate our privilege.
+Following this example, if "_C:\\_" folder is writeable, it would be possible to create a malicious executable binary called "_Program.exe_". If "_binary.exe_" run with high privilege, it could be a good way to escalate our privilege.
 
 Note: BeRoot realized these checks on every service path, scheduled tasks and startup keys located in HKLM.
 
@@ -35,7 +34,7 @@ Consider the following file path:
 C:\Program Files\Some Test\binary.exe
 ```
 
-If the root directory of "binary.exe" is writeable ("C:\Program Files\Some Test\") and run with high privilege, it could be used to elevate our privileges. 
+If the root directory of "_binary.exe_" is writeable (_"C:\Program Files\Some Test\"_) and run with high privilege, it could be used to elevate our privileges. 
 
 __Note__: BeRoot realized these checks on every service path, scheduled tasks and startup keys located in HKLM.
 
@@ -69,7 +68,7 @@ On a classic Windows installation, when DLLs are loaded by a binary, Windows wou
 
 If a directory on the __%PATH%__ variable is writeable, it would be possible to realize DLL hijacking attacks. Then, the goal would be to find a service which loads a DLL not present on each of these path. This is the case of the default "__IKEEXT__" service which loads the inexistant "__wlbsctrl.dll__". 
 
-How to exploit: Create a malicious DLL called "wlbsctrl.dll" (check dll templates) and add it to the writeable path listed on the %PATH% variable. Start the service "IKEEXT".
+__How to exploit__: Create a malicious DLL called "_wlbsctrl.dll_" (check dll templates) and add it to the writeable path listed on the %PATH% variable. Start the service "_IKEEXT_".
 To start the IKEEXT service without high privilege, a technic describe on the french magazine MISC 90 explains the following method: 
 
 Create a file as following: 
@@ -83,7 +82,7 @@ DEVICE=vpn
 PhoneNumber=127.0.0.1
 ```
 
-Use the "rasdial" binary to start the IKEEXT service. Even if the connection failed, the service should have been started. 
+Use the "_rasdial_" binary to start the IKEEXT service. Even if the connection failed, the service should have been started. 
 ```
 C:\Users\bob\Desktop>rasdial IKEEXTPOC test test /PHONEBOOK:test.txt
 ```
@@ -94,21 +93,21 @@ MS16-075
 For French user, I recommend the article written on the MISC 90 which explain in details how it works. 
 
 This vulnerability has been corrected by Microsoft with MS16-075, however many servers are still vulnerable to this kind of attack. 
-I have been inspired from the C++ POC available here: https://github.com/secruul/SysExec
+I have been inspired from the C++ POC available [here](https://github.com/secruul/SysExec)
 
 Here are some explaination (not in details):
-```
-- Start Webclient service (used to connect to some shares) using some magic tricks (using its UUID)
-- Start an HTTP server locally
-- Find a service which will be used to trigger a SYSTEM NTLM hash. 
-- Enable file tracing on this service modifying its registry key to point to our webserver (\\127.0.0.1@<port>\tracing)
-- Start this service
-- Our HTTP Server start a negotiation to get the SYSTEM NTLM hash
-- Use of this hash with SMB to execute our custom payload (SMBrelayx has been modify to realize this action: https://github.com/CoreSecurity/impacket/blob/master/examples/smbrelayx.py)
-- Clean everything (stop the service, clean the regritry, etc.).
-```
 
-__How to exploit__: BeRoot realize this exploitation, change the "-c" option to execute custom command on the vulnerable host.
+1. Start Webclient service (used to connect to some shares) using some magic tricks (using its UUID)
+2. Start an HTTP server locally
+3. Find a service which will be used to trigger a _SYSTEM NTLM hash_. 
+4. Enable file tracing on this service modifying its registry key to point to our webserver (_\\\\127.0.0.1@port\\tracing_)
+5. Start this service
+6. Our HTTP Server start a negotiation to get the _SYSTEM NTLM hash_
+7. Use of this hash with SMB to execute our custom payload ([SMBrelayx](https://github.com/CoreSecurity/impacket/blob/master/examples/smbrelayx.py) has been modify to realize this action)
+8. Clean everything (stop the service, clean the regritry, etc.).
+
+
+__How to exploit__: BeRoot realize this exploitation, change the "_-c_" option to execute custom command on the vulnerable host.
 ```
 beRoot.exe -c "net user Zapata LaLuchaSigue /add"
 beRoot.exe -c "net localgroup Administrators Zapata /add"
@@ -117,7 +116,7 @@ beRoot.exe -c "net localgroup Administrators Zapata /add"
 AlwaysInstallElevated registry key
 ----
 
-__AlwaysInstallElevated__ is a setting that allows non-privileged users the ability to run Microsoft Windows Installer Package Files (MSI) with elevated (SYSTEM) permissions. To allow it, two registry entries have to be set to "__1__":
+__AlwaysInstallElevated__ is a setting that allows non-privileged users the ability to run Microsoft Windows Installer Package Files (_MSI_) with elevated (_SYSTEM_) permissions. To allow it, two registry entries have to be set to "__1__":
 ```
 HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
 HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
@@ -165,7 +164,7 @@ Other tests are realized to check if it's possible to:
 * Modify an existing service
 * Creation a new service
 * Modify a startup key (on HKLM)
-* Modify files where scheduled tasks are stored: "C:\Windows\system32\Tasks"
+* Modify files where scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
 
 Special thanks
 ----
