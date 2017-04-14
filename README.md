@@ -68,7 +68,7 @@ On a classic Windows installation, when DLLs are loaded by a binary, Windows wou
 
 If a directory on the __%PATH%__ variable is writeable, it would be possible to realize DLL hijacking attacks. Then, the goal would be to find a service which loads a DLL not present on each of these path. This is the case of the default "__IKEEXT__" service which loads the inexistant "__wlbsctrl.dll__". 
 
-__How to exploit__: Create a malicious DLL called "_wlbsctrl.dll_" (check dll templates) and add it to the writeable path listed on the %PATH% variable. Start the service "_IKEEXT_".
+__How to exploit__: Create a malicious DLL called "_wlbsctrl.dll_" (use the [DLL template](https://github.com/AlessandroZ/BeRoot/tree/master/templates/DLL_Hijacking)) and add it to the writeable path listed on the %PATH% variable. Start the service "_IKEEXT_".
 To start the IKEEXT service without high privilege, a technic describe on the french magazine MISC 90 explains the following method: 
 
 Create a file as following: 
@@ -116,7 +116,7 @@ beRoot.exe -c "net localgroup Administrators Zapata /add"
 AlwaysInstallElevated registry key
 ----
 
-__AlwaysInstallElevated__ is a setting that allows non-privileged users the ability to run Microsoft Windows Installer Package Files (_MSI_) with elevated (_SYSTEM_) permissions. To allow it, two registry entries have to be set to "__1__":
+__AlwaysInstallElevated__ is a setting that allows non-privileged users the ability to run Microsoft Windows Installer Package Files (_MSI_) with elevated (_SYSTEM_) permissions. To allow it, two registry entries have to be set to __1__:
 ```
 HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
 HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
