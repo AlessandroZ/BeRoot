@@ -7,6 +7,28 @@ It will be added to the [pupy](https://github.com/n1nj4sec/pupy/) project as a p
 
 Except one method, this tool is only used to detect and not to exploit. If something is found, [templates](https://github.com/AlessandroZ/BeRoot/tree/master/templates/) could be used to exploit it. To use it, just create a __test.bat__ file located next to the service / DLL used. It should execute it once called. Depending on the Redistributable Packages installed on the target host, these binaries may not work.  
 
+Run it
+----
+```
+|====================================================================|
+|                                                                    |
+|                    Windows Privilege Escalation                    |
+|                                                                    |
+|                          ! BANG BANG !                             |
+|                                                                    |
+|====================================================================|
+
+
+usage: beRoot.exe [-h] [-l] [-w] [-c CMD]
+
+Windows Privilege Escalation
+
+optional arguments:
+  -h, --help         show this help message and exit
+  -l, --list         list all softwares installed (not run by default)
+  -w, --write        write output
+  -c CMD, --cmd CMD  cmd to execute for the webclient check (default: whoami)
+```
 
 All detection methods are described on the following document. 
 
