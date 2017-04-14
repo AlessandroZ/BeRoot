@@ -34,7 +34,7 @@ Consider the following file path:
 C:\Program Files\Some Test\binary.exe
 ```
 
-If the root directory of "_binary.exe_" is writeable ("_C:\Program Files\Some Test\_") and run with high privilege, it could be used to elevate our privileges. 
+If the root directory of "_binary.exe_" is writeable (_"C:\Program Files\Some Test\"_) and run with high privilege, it could be used to elevate our privileges. 
 
 __Note__: BeRoot realized these checks on every service path, scheduled tasks and startup keys located in HKLM.
 
@@ -164,7 +164,7 @@ Other tests are realized to check if it's possible to:
 * Modify an existing service
 * Creation a new service
 * Modify a startup key (on HKLM)
-* Modify files where scheduled tasks are stored: "C:\Windows\system32\Tasks"
+* Modify files where scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
 
 Special thanks
 ----
