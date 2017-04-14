@@ -1,5 +1,15 @@
 # BeRoot
 
+BeRoot(s) is a post exploitation tool to check commun Windows misconfigurations to find a way to escalate our privilege. \
+A compiled version is available [here](https://github.com/AlessandroZ/BeRoot/releases). 
+
+It will be added to the [pupy](https://github.com/n1nj4sec/pupy/) project as a post exploitation module (so it will be executed all in memory without touching the disk. 
+
+Except one method, this tool is only used to detect and not to exploit. If something is found, [templates](https://github.com/AlessandroZ/BeRoot/tree/master/templates/) could be used to exploit it. To use it, just create a __test.bat__ file located next to the service / DLL used. It should execute it once called. Depending on the Redistributable Packages installed on the target host, these binaries may not work.  
+
+
+All detection methods are described on the following document. 
+
 
 Path containing space without quotes
 ----
