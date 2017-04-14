@@ -96,6 +96,10 @@ def format_results(sk, p, checkSubdir=False):
 		if sk.key:
 			results['Key'] = sk.key
 
+	if 'permissions' in dir(sk):
+		if sk.permissions:
+			results['permissions'] = str(sk.permissions)
+
 	if 'runlevel' in dir(sk):
 		if sk.runlevel:
 			results['Runlevel'] = sk.runlevel
