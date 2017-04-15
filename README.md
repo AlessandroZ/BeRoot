@@ -3,10 +3,32 @@
 BeRoot(s) is a post exploitation tool to check commun Windows misconfigurations to find a way to escalate our privilege. \
 A compiled version is available [here](https://github.com/AlessandroZ/BeRoot/releases). 
 
-It will be added to the [pupy](https://github.com/n1nj4sec/pupy/) project as a post exploitation module (so it will be executed all in memory without touching the disk. 
+It will be added to the [pupy](https://github.com/n1nj4sec/pupy/) project as a post exploitation module (so it will be executed all in memory without touching the disk). 
 
 Except one method, this tool is only used to detect and not to exploit. If something is found, [templates](https://github.com/AlessandroZ/BeRoot/tree/master/templates/) could be used to exploit it. To use it, just create a __test.bat__ file located next to the service / DLL used. It should execute it once called. Depending on the Redistributable Packages installed on the target host, these binaries may not work.  
 
+Run it
+----
+```
+|====================================================================|
+|                                                                    |
+|                    Windows Privilege Escalation                    |
+|                                                                    |
+|                          ! BANG BANG !                             |
+|                                                                    |
+|====================================================================|
+
+
+usage: beRoot.exe [-h] [-l] [-w] [-c CMD]
+
+Windows Privilege Escalation
+
+optional arguments:
+  -h, --help         show this help message and exit
+  -l, --list         list all softwares installed (not run by default)
+  -w, --write        write output
+  -c CMD, --cmd CMD  cmd to execute for the webclient check (default: whoami)
+```
 
 All detection methods are described on the following document. 
 
@@ -33,8 +55,8 @@ Note: BeRoot realized these checks on every service path, scheduled tasks and st
 __How to exploit__: \
 \
 The vulnerable path runs as: 
-* a service: create a malicious service (or compile the service template)
-* a classic executable: Create your own executable. 
+* _a service_: create a malicious service (or compile the service template)
+* _a classic executable_: Create your own executable. 
 
  Writeable directory
 ----
@@ -172,9 +194,9 @@ Other possible misconfigurations
 
 Other tests are realized to check if it's possible to: 
 * Modify an existing service
-* Creation a new service
+* Create a new service
 * Modify a startup key (on HKLM)
-* Modify files where scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
+* Modify directory where all scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
 
 Special thanks
 ----
