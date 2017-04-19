@@ -48,7 +48,7 @@ C:\Program Files\Some.exe
 C:\Program Files\Some Folder\binary.exe
 ```
 
-Following this example, if "_C:\\_" folder is writeable, it would be possible to create a malicious executable binary called "_Program.exe_". If "_binary.exe_" run with high privilege, it could be a good way to escalate our privilege.
+Following this example, if "_C:\\_" folder is writable, it would be possible to create a malicious executable binary called "_Program.exe_". If "_binary.exe_" run with high privilege, it could be a good way to escalate our privilege.
 
 Note: BeRoot realized these checks on every service path, scheduled tasks and startup keys located in HKLM.
 
@@ -58,7 +58,7 @@ The vulnerable path runs as:
 * _a service_: create a malicious service (or compile the service template)
 * _a classic executable_: Create your own executable. 
 
- Writeable directory
+ Writable directory
 ----
 
 Consider the following file path:
@@ -66,7 +66,7 @@ Consider the following file path:
 C:\Program Files\Some Test\binary.exe
 ```
 
-If the root directory of "_binary.exe_" is writeable (_"C:\Program Files\Some Test\"_) and run with high privilege, it could be used to elevate our privileges. 
+If the root directory of "_binary.exe_" is writable (_"C:\Program Files\Some Test\"_) and run with high privilege, it could be used to elevate our privileges. 
 
 __Note__: BeRoot realized these checks on every service path, scheduled tasks and startup keys located in HKLM.
 
@@ -78,7 +78,7 @@ __How to exploit__:
 	* Most exploitation will be like that, checks for dll hijacking and try to restart the service using previous technics.
 
 
-Writeable directory on %PATH%
+Writable directory on %PATH%
 ----
 
 This technic affects the following Windows version:
@@ -98,9 +98,9 @@ On a classic Windows installation, when DLLs are loaded by a binary, Windows wou
 - Directory present in %PATH% environment variable
 ```
 
-If a directory on the __%PATH%__ variable is writeable, it would be possible to realize DLL hijacking attacks. Then, the goal would be to find a service which loads a DLL not present on each of these path. This is the case of the default "__IKEEXT__" service which loads the inexistant "__wlbsctrl.dll__". 
+If a directory on the __%PATH%__ variable is writable, it would be possible to realize DLL hijacking attacks. Then, the goal would be to find a service which loads a DLL not present on each of these path. This is the case of the default "__IKEEXT__" service which loads the inexistant "__wlbsctrl.dll__". 
 
-__How to exploit__: Create a malicious DLL called "_wlbsctrl.dll_" (use the [DLL template](https://github.com/AlessandroZ/BeRoot/tree/master/templates/DLL_Hijacking)) and add it to the writeable path listed on the %PATH% variable. Start the service "_IKEEXT_".
+__How to exploit__: Create a malicious DLL called "_wlbsctrl.dll_" (use the [DLL template](https://github.com/AlessandroZ/BeRoot/tree/master/templates/DLL_Hijacking)) and add it to the writable path listed on the %PATH% variable. Start the service "_IKEEXT_".
 To start the IKEEXT service without high privilege, a technic describe on the french magazine MISC 90 explains the following method: 
 
 Create a file as following: 
