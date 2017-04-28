@@ -1,8 +1,8 @@
 from beroot.modules.checks.path_manipulation_checks import get_path_info
 from beroot.modules.objects.service import Service
 from beroot.modules.objects.registry import Registry_key
-import win32api
-import win32con
+from beroot.modules.objects.winstructures import *
+import _winreg
 import os
 
 class Registry():
@@ -28,8 +28,8 @@ class Registry():
 		runkeys_hklm = self.definePath()
 		
 		# access either in read only mode, or in write mode
-		accessRead = win32con.KEY_READ | win32con.KEY_ENUMERATE_SUB_KEYS | win32con.KEY_QUERY_VALUE
-		accessWrite = win32con.KEY_WRITE | win32con.KEY_ENUMERATE_SUB_KEYS | win32con.KEY_QUERY_VALUE
+		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
+		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 
 		# Loop through all keys to check
 		for keyPath in runkeys_hklm:
@@ -37,21 +37,21 @@ class Registry():
 
 			# check if the registry key has writable access
 			try:
-				hkey = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, keyPath, 0, accessWrite)
+				hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessWrite)
 				is_key_writable = keyPath
 			except:
 				try:
-					hkey = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, keyPath, 0, accessRead)
+					hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessRead)
 				except:
 					continue
 
 			# retrieve all value of the registry key
 			try:
-				num = win32api.RegQueryInfoKey(hkey)[1]
+				num = _winreg.QueryInfoKey(hkey)[1]
 
 				# loop through number of value in the key
 				for x in range(0, num):
-					k = win32api.RegEnumValue(hkey, x)
+					k = _winreg.EnumValue(hkey, x)
 					
 					stk = Registry_key()
 					if is_key_writable:
@@ -63,8 +63,8 @@ class Registry():
 					stk.paths = get_path_info(k[1])
 
 					keys.append(stk)
-				win32api.RegCloseKey(hkey)
-			except win32api.error:
+				_winreg.CloseKey(hkey)
+			except:
 				pass
 
 		return keys
@@ -76,45 +76,45 @@ class Registry():
 		service_keys = []
 
 		# Open the Base on read only
-		accessRead = win32con.KEY_READ | win32con.KEY_ENUMERATE_SUB_KEYS | win32con.KEY_QUERY_VALUE
-		accessWrite = win32con.KEY_WRITE | win32con.KEY_ENUMERATE_SUB_KEYS | win32con.KEY_QUERY_VALUE
+		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
+		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 
-		hkey = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services', 0, accessRead)
-		num = win32api.RegQueryInfoKey(hkey)[0]
+		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services', 0, accessRead)
+		num = _winreg.QueryInfoKey(hkey)[0]
 		
 		# loop through all subkeys
 		for x in range(0, num):
 			sk = Service()
 			
 			# Name of the service
-			svc = win32api.RegEnumKey(hkey, x)
+			svc = _winreg.EnumKey(hkey, x)
 			sk.name = svc
 			
 			# ------ Check Write access of the key ------
 			try:
 					sk.key = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
-					skey = win32api.RegOpenKey(hkey, svc, 0, accessWrite)
+					skey = _winreg.OpenKey(hkey, svc, 0, accessWrite)
 					sk.is_key_writable = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
-			except win32api.error:
-				skey = win32api.RegOpenKey(hkey, svc, 0, accessRead)
+			except:
+				skey = _winreg.OpenKey(hkey, svc, 0, accessRead)
 				pass
 
 			# ------ Check if the key has the Parameters\Application value presents ------
 			try:
 				# find display name
-				display_name = str(win32api.RegQueryValueEx(skey, 'DisplayName')[0])
+				display_name = str(_winreg.QueryValueEx(skey, 'DisplayName')[0])
 				if display_name:
 					sk.display_name = display_name
-			except win32api.error:
+			except:
 				# in case there is no key called DisplayName
 				pass
 
 			# ------ Check if the key has his executable with write access and the folder containing it as well ------
 			try:
-				skey = win32api.RegOpenKey(hkey, svc, 0, accessRead)
+				skey = _winreg.OpenKey(hkey, svc, 0, accessRead)
 
 				# find ImagePath name
-				image_path = str(win32api.RegQueryValueEx(skey, 'ImagePath')[0])
+				image_path = str(_winreg.QueryValueEx(skey, 'ImagePath')[0])
 
 				if image_path:
 					image_path = os.path.expandvars(image_path)
@@ -122,7 +122,7 @@ class Registry():
 					if 'drivers' not in image_path.lower():
 						sk.full_path = image_path
 						sk.paths = get_path_info(image_path)
-			except win32api.error:
+			except:
 				pass
 			
 			service_keys.append(sk)

@@ -1,7 +1,4 @@
 from beroot.modules.objects.path import Path
-import win32con
-import win32api
-import win32security
 import ntpath
 import os
 import re

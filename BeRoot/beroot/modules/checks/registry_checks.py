@@ -1,5 +1,5 @@
-import win32api
-import win32con
+from beroot.modules.objects.winstructures import *
+import _winreg
 
 # return the service with write access on his key
 def registry_key_with_write_access(keys):
@@ -13,9 +13,9 @@ def registry_key_with_write_access(keys):
 # check if MSI files are always launched with SYSTEM privileges if AlwaysInstallElevated registry key is set
 def check_msi_misconfiguration():
 	try:
-		hklm = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, 'SOFTWARE\\Policies\\Microsoft\\Windows\\Installer', 0, win32con.KEY_READ)
-		hkcu = win32api.RegOpenKey(win32con.HKEY_CURRENT_USER, 'SOFTWARE\\Policies\\Microsoft\\Windows\\Installer', 0, win32con.KEY_READ)
-		if int(win32api.RegQueryValueEx(hklm, 'AlwaysInstallElevated')[0]) != 0 and int(win32api.RegQueryValueEx(hkcu, 'AlwaysInstallElevated')[0]) != 0:
+		hklm = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Policies\\Microsoft\\Windows\\Installer', 0, KEY_READ)
+		hkcu = _winreg.OpenKey(HKEY_CURRENT_USER, 'SOFTWARE\\Policies\\Microsoft\\Windows\\Installer', 0, KEY_READ)
+		if int(_winreg.QueryValueEx(hklm, 'AlwaysInstallElevated')[0]) != 0 and int(_winreg.QueryValueEx(hkcu, 'AlwaysInstallElevated')[0]) != 0:
 			return True
 	except:
 		pass

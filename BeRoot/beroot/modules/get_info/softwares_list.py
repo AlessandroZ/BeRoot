@@ -1,7 +1,7 @@
-import win32api
-import win32con
-import re
 from beroot.modules.objects.software import Software
+from beroot.modules.objects.winstructures import *
+import _winreg
+import re
 
 # Manage all softwares
 class Softwares():
@@ -14,30 +14,30 @@ class Softwares():
 		results = []
 
 		# Open the Base on read only
-		accessRead = win32con.KEY_READ | win32con.KEY_ENUMERATE_SUB_KEYS | win32con.KEY_QUERY_VALUE
+		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 
 		# check the uninstall key path 
-		hkey = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\\", 0, accessRead)
-		num = win32api.RegQueryInfoKey(hkey)[0]
+		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\\", 0, accessRead)
+		num = _winreg.QueryInfoKey(hkey)[0]
 		
 		# loop through number of subkeys
 		for x in range(0, num):
 			
 			# Name of the software key
-			sk = win32api.RegEnumKey(hkey, x)
+			sk = _winreg.EnumKey(hkey, x)
 			
 			# ------ Check if the key has his executable with write access and the folder containing it as well ------
 			try:
-				skey = win32api.RegOpenKey(hkey, sk, 0, accessRead)
+				skey = _winreg.OpenKey(hkey, sk, 0, accessRead)
 				
-				name = str(win32api.RegQueryValueEx(skey, "DisplayName")[0])
+				name = str(_winreg.QueryValueEx(skey, "DisplayName")[0])
 				if name:
 					# regex to not match security patch (KB)
 					m = re.match(r".*KB[0-9]{5,7}.*", name, re.IGNORECASE)
 					if not m:
 						soft = Software()
 						soft.name = name
-						soft.version = str(win32api.RegQueryValueEx(skey, "DisplayVersion")[0])
+						soft.version = str(_winreg.QueryValueEx(skey, "DisplayVersion")[0])
 						soft.key = skey
 						results.append(soft)
 			except:

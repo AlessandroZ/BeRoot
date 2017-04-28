@@ -1,14 +1,21 @@
-import win32service
+from beroot.modules.objects.winstructures import *
 
 # Check if a service can be created
 def check_services_creation_with_openscmanager():
 	isPossible = False
 	try:
 		# open the SCM with "SC_MANAGER_CREATE_SERVICE" rights 
-		createServ = win32service.OpenSCManager(None, None, win32service.SC_MANAGER_CREATE_SERVICE)
-		return True
+		createServ = OpenSCManager(None, None, SC_MANAGER_CREATE_SERVICE)
+		try:
+			if int(createServ) != 0:
+				return True
+		# if the int cast failed (when it is an HANDLE)
+		except:
+			return True
 	except: 
-		return False
+		pass
+	
+	return False
 
 # returns all services that could be modified
 def check_service_permissions(services):
