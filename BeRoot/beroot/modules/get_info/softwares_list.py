@@ -17,7 +17,7 @@ class Softwares():
 		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 
 		# check the uninstall key path 
-		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\\", 0, accessRead)
+		hkey = OpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\\", 0, accessRead)
 		num = _winreg.QueryInfoKey(hkey)[0]
 		
 		# loop through number of subkeys
@@ -28,7 +28,7 @@ class Softwares():
 			
 			# ------ Check if the key has his executable with write access and the folder containing it as well ------
 			try:
-				skey = _winreg.OpenKey(hkey, sk, 0, accessRead)
+				skey = OpenKey(hkey, sk, 0, accessRead)
 				
 				name = str(_winreg.QueryValueEx(skey, "DisplayName")[0])
 				if name:

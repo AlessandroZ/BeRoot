@@ -1,53 +1,61 @@
 # Check Services
 from beroot.modules.checks.path_manipulation_checks import get_path_info
 from beroot.modules.objects.taskscheduler import Taskscheduler
+from beroot.modules.get_info.system_info import System
 from beroot.modules.objects.path import Path
 import xml.etree.cElementTree as ET
-import pythoncom
+# import pythoncom
 import platform
+import ctypes
 import os
 
 class GetTaskschedulers():
 	def __init__(self):
-		self.task_directory = os.environ.get('SystemRoot') + os.sep + 'system32\Tasks'
+		self.task_directory = os.path.join(os.environ.get('systemroot'), 'system32\Tasks')
+		s = System()
+		
+		self.disable_redirection = False
+		if s.isx64:
+			self.disable_redirection = True
 
 	def tasksList(self):
 		tasks_list = []
 
 		# manage tasks for windows XP
 		if platform.release() == 'XP' or platform.release() == '2003':
-			try:
-				from win32com.taskscheduler import taskscheduler
+			pass
+			# try:
+			# 	from win32com.taskscheduler import taskscheduler
 				
-				ts = pythoncom.CoCreateInstance(
-													taskscheduler.CLSID_CTaskScheduler,
-													None, 
-													pythoncom.CLSCTX_INPROC_SERVER,
-													taskscheduler.IID_ITaskScheduler
-												)
-			except: 
-				return False
+			# 	ts = pythoncom.CoCreateInstance(
+			# 										taskscheduler.CLSID_CTaskScheduler,
+			# 										None, 
+			# 										pythoncom.CLSCTX_INPROC_SERVER,
+			# 										taskscheduler.IID_ITaskScheduler
+			# 									)
+			# except: 
+			# 	return False
 			
 			# Loop through all scheduled task
-			tasks = ts.Enum()
-			for job in tasks:
-				task = ts.Activate(job)
+			# tasks = ts.Enum()
+			# for job in tasks:
+			# 	task = ts.Activate(job)
 
-				t = Taskscheduler()
-				t.name = job
+			# 	t = Taskscheduler()
+			# 	t.name = job
 
 				# check if the tasks file has write access
-				taskpath = '%s%s%s%s%s' % (os.environ['systemroot'], os.sep, 'Tasks', os.sep, job)
+				# taskpath = '%s%s%s%s%s' % (os.environ['systemroot'], os.sep, 'Tasks', os.sep, job)
 				# TO DO
 				# if os.path.exists(taskpath):
 				# 	if checkPermissions(taskpath):
 				# 		results = results + '<strong><font color=ff0000>Write access on: ' + taskpath + '</font></strong><br/>\n'
 				
 				# run as
-				try:
-					t.runas = task.GetCreator()
-				except:
-					pass
+				# try:
+				# 	t.runas = task.GetCreator()
+				# except:
+				# 	pass
 				
 				# path of the exe file
 				# try:
@@ -63,6 +71,10 @@ class GetTaskschedulers():
 				
 		# manage task for windows 7
 		else:
+			if self.disable_redirection:
+				wow64 = ctypes.c_long(0)
+				ctypes.windll.kernel32.Wow64DisableWow64FsRedirection(ctypes.byref(wow64))
+
 			if os.path.exists(self.task_directory):
 				for root, dirs, files in os.walk(self.task_directory):
 					for f in files:
@@ -128,6 +140,9 @@ class GetTaskschedulers():
 							
 							# append the tasks to the main tasklist
 							tasks_list.append(t)
+			
+			if self.disable_redirection:
+				ctypes.windll.kernel32.Wow64EnableWow64FsRedirection(wow64)
 
 		return tasks_list
 						

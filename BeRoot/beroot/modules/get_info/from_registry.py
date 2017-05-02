@@ -37,11 +37,11 @@ class Registry():
 
 			# check if the registry key has writable access
 			try:
-				hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessWrite)
+				hkey = OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessWrite)
 				is_key_writable = keyPath
 			except:
 				try:
-					hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessRead)
+					hkey = OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessRead)
 				except:
 					continue
 
@@ -79,7 +79,7 @@ class Registry():
 		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 
-		hkey = _winreg.OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services', 0, accessRead)
+		hkey = OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services', 0, accessRead)
 		num = _winreg.QueryInfoKey(hkey)[0]
 		
 		# loop through all subkeys
@@ -93,10 +93,10 @@ class Registry():
 			# ------ Check Write access of the key ------
 			try:
 					sk.key = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
-					skey = _winreg.OpenKey(hkey, svc, 0, accessWrite)
+					skey = OpenKey(hkey, svc, 0, accessWrite)
 					sk.is_key_writable = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
 			except:
-				skey = _winreg.OpenKey(hkey, svc, 0, accessRead)
+				skey = OpenKey(hkey, svc, 0, accessRead)
 				pass
 
 			# ------ Check if the key has the Parameters\Application value presents ------
@@ -111,7 +111,7 @@ class Registry():
 
 			# ------ Check if the key has his executable with write access and the folder containing it as well ------
 			try:
-				skey = _winreg.OpenKey(hkey, svc, 0, accessRead)
+				skey = OpenKey(hkey, svc, 0, accessRead)
 
 				# find ImagePath name
 				image_path = str(_winreg.QueryValueEx(skey, 'ImagePath')[0])

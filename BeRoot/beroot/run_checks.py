@@ -1,14 +1,14 @@
-from modules.checks.path_manipulation_checks import isRootDirectoryWritable, space_and_no_quotes, exe_with_writable_directory
-from modules.checks.services_checks import check_services_creation_with_openscmanager, check_service_permissions
-from modules.checks.filesystem_checks import check_unattended_files, check_sysprep_files, checks_writeable_directory_on_path_environment_variable, check_well_known_dll_injections
-from modules.checks.registry_checks import registry_key_with_write_access, check_msi_misconfiguration
-from modules.checks.system import can_get_admin_access
-from modules.get_info.from_scmanager_services import GetServices
-from modules.get_info.from_registry import Registry
-from modules.get_info.from_taskscheduler import GetTaskschedulers
-from modules.get_info.softwares_list import Softwares
-from modules.get_info.system_info import System
-from modules.checks.webclient.webclient import WebClient
+from beroot.modules.checks.path_manipulation_checks import isRootDirectoryWritable, space_and_no_quotes, exe_with_writable_directory
+from beroot.modules.checks.services_checks import check_services_creation_with_openscmanager, check_service_permissions
+from beroot.modules.checks.filesystem_checks import check_unattended_files, check_sysprep_files, checks_writeable_directory_on_path_environment_variable, check_well_known_dll_injections
+from beroot.modules.checks.registry_checks import registry_key_with_write_access, check_msi_misconfiguration
+from beroot.modules.checks.system import can_get_admin_access
+from beroot.modules.get_info.from_scmanager_services import GetServices
+from beroot.modules.get_info.from_registry import Registry
+from beroot.modules.get_info.from_taskscheduler import GetTaskschedulers
+from beroot.modules.get_info.softwares_list import Softwares
+from beroot.modules.get_info.system_info import System
+from beroot.modules.checks.webclient.webclient import WebClient
 import traceback
 import platform
 

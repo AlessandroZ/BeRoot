@@ -1,12 +1,17 @@
+from beroot.modules.get_info.system_info import System
 from ctypes.wintypes import *
 from ctypes import *
+import platform
+import _winreg
 
 HKEY_LOCAL_MACHINE 			= -2147483646
 HKEY_CURRENT_USER 			= -2147483647
+
 KEY_READ 					= 131097
 KEY_WRITE 					= 131078
 KEY_ENUMERATE_SUB_KEYS 		= 8
 KEY_QUERY_VALUE 			= 1
+
 REG_EXPAND_SZ 				= 2
 REG_DWORD 					= 4
 LPCTSTR 					= LPSTR
@@ -34,6 +39,7 @@ PSERVICE_STATUS = POINTER(SERVICE_STATUS)
 
 OpenSCManager 				= windll.advapi32.OpenSCManagerA
 OpenSCManager.argtypes 		= [LPCTSTR, LPCTSTR, DWORD]
+OpenSCManager.restype  		= HANDLE
 
 OpenService 				= windll.advapi32.OpenServiceA
 OpenService.argtypes 		= [HANDLE, LPCTSTR, DWORD]
@@ -58,3 +64,11 @@ GetServiceKeyName.restype  	= BOOL
 QueryServiceStatus			= windll.advapi32.QueryServiceStatus
 QueryServiceStatus.argtypes = [HANDLE, PSERVICE_STATUS]
 QueryServiceStatus.restype  = BOOL
+
+
+s = System()
+def OpenKey(key, path, index, access):
+	if s.isx64:
+		return _winreg.OpenKey(key, path, index, access | _winreg.KEY_WOW64_64KEY)
+	else:
+		return _winreg.OpenKey(key, path, index, access)

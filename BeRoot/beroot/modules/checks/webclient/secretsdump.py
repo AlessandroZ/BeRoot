@@ -59,7 +59,7 @@ import codecs
 import os
 
 from impacket import system_errors
-from impacket.examples import logger
+# from impacket.examples import logger
 from impacket import version, winregistry, ntlm
 from impacket.smbconnection import SMBConnection
 from impacket.dcerpc.v5 import transport, rrp, scmr, wkst, samr, epm, drsuapi

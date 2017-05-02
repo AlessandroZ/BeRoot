@@ -1,4 +1,5 @@
 import ctypes
+import os
 
 class OSVERSIONINFOEXW(ctypes.Structure):
 	_fields_ = [('dwOSVersionInfoSize', ctypes.c_ulong),
@@ -14,6 +15,8 @@ class OSVERSIONINFOEXW(ctypes.Structure):
 				('wReserved', ctypes.c_byte)]
 
 class System():
+	def __init__(self):
+		self.isx64 = self.isx64machine()
 
 	def get_os_version(self):
 		os_version = OSVERSIONINFOEXW()
@@ -23,3 +26,15 @@ class System():
 			return False
 
 		return '%s.%s' % (str(os_version.dwMajorVersion.real), str(os_version.dwMinorVersion.real))
+
+	def isx64machine(self):
+		
+		archi = os.environ.get("PROCESSOR_ARCHITEW6432", '')
+		if '64' in archi:
+			return True
+
+		archi = os.environ.get("PROCESSOR_ARCHITECTURE", '')
+		if '64' in archi:
+			return True
+
+		return False
