@@ -9,14 +9,14 @@ def print_output(output, write=False, file=None):
 	if 'NotPrint' in output:
 		toPrint = False
 
-	st = '\n-------------- %s --------------\n' % output['Category']
+	st = '\n################ %s ################\n' % output['Category']
 
 	if 'list' in str(type(output['All'])):
-		for results in output['All']:
-			st += '\n[!] %s\n' % results['Function'].capitalize()
+		output['All'] = sorted(output['All'], key=lambda x: output['All'])
+		for resultss in output['All']:	
+			st += '\n[!] %s\n' % resultss['Function'].capitalize()
+			results = resultss['Results']
 
-			results = results['Results']
-			
 			# return only one result (True or False)
 			if 'bool' in str(type(results)):
 				st += '%s\n' % str(results)
@@ -26,7 +26,7 @@ def print_output(output, write=False, file=None):
 					if 'list' in str(type(results[result])):
 						st += '%s\n' % str(result)
 						for w in results[result]:
-							st += '- %s\n' % w
+							st += '\t- %s\n' % w
 					st += '\n'
 
 			elif 'list' in str(type(results)):
@@ -34,11 +34,11 @@ def print_output(output, write=False, file=None):
 					if 'str' in str(type(result)):
 						st += '%s\n' % result
 					else:
-						for r in result:
+						for r in sorted(result, key=result.get, reverse=True):
 							if 'list' in str(type(result[r])):
 								st += '%s:\n' % r
 								for w in result[r]:
-									st += '- %s\n' % w
+									st += '\t- %s\n' % w
 							else:
 								st += '%s: %s\n' % (r, str(result[r]))
 						st += '\n'
