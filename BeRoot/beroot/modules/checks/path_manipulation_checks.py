@@ -32,12 +32,8 @@ def getSubDirWritable(path):
 
 
 # global variable to not compile it every time
-# change the regex to match "("
-# exemple not matched: C:\Program Files (x86)\WinPcap\rpcapd.exe
-# reg = r"(?P<fullpath>\"?(([a-zA-Z]:|\\\\\w[ \w\.]*)(\\\w[ \w\.]*|\\%[ \w\.]+%+)+|%[ \w\.]+%(\\\w[ \w\.]*|\\%[ \w\.]+%+)*)\"?)"
-reg = r"(?P<fullpath>\"?[a-zA-Z]:(\\\w[ \w\.]*)+\.\w\w\w\"?)"
+reg = r"(?P<fullpath>\"?[a-zA-Z]:(\\\w[ (?\w\.)?]*)+\.\w\w\w\"?)"
 regex = re.compile(reg, re.IGNORECASE)
-
 def get_path_info(path):
 	paths = []
 	path = os.path.expandvars(path)
@@ -52,7 +48,7 @@ def get_path_info(path):
 		if '\'' in path or '"' in path:
 			hasQuotes = True
 			path = path.replace('\'', '').replace('"', '')
-		
+
 		paths.append(
 			Path(
 				path=path, 
