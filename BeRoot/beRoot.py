@@ -46,7 +46,7 @@ def print_output(output, write=False, file=None):
 		st += output['All']
 
 	if toPrint:
-		print st
+		print str(st)
 	
 	if write:
 		f = open(file, 'a')
@@ -93,7 +93,11 @@ if __name__ == '__main__':
 
 	start_time = time.time()
 	for r in run(args.cmd, args.list, args.write):
-		print_output(r, args.write, path)
+		try:
+			print_output(r, args.write, path)
+		except:
+			# manage unicode
+			pass
 
 	elapsed_time = time.time() - start_time
 	print '\n[!] Elapsed time = ' + str(elapsed_time)
