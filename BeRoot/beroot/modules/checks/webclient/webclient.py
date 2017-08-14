@@ -9,7 +9,13 @@ import _winreg
 import time
 
 UCHAR 		= c_ubyte
-ULONGLONG 	= c_ulonglong
+
+# x86 bits system
+if sizeof(c_voidp) == 4:
+	ULONGLONG 	= c_longlong
+# x64 bits system
+else:
+	ULONGLONG 	= c_ulonglong
 
 class GUID(Structure):
 	_fields_ = [
