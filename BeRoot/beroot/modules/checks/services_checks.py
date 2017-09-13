@@ -1,4 +1,5 @@
 from beroot.modules.objects.winstructures import *
+import ctypes
 
 # Check if a service can be created
 def check_services_creation_with_openscmanager():
@@ -6,11 +7,7 @@ def check_services_creation_with_openscmanager():
 	try:
 		# open the SCM with "SC_MANAGER_CREATE_SERVICE" rights 
 		createServ = OpenSCManager(None, None, SC_MANAGER_CREATE_SERVICE)
-		try:
-			if int(createServ) != 0:
-				return True
-		# if the int cast failed (when it is an HANDLE)
-		except:
+		if ctypes.GetLastError() == 0:
 			return True
 	except: 
 		pass
