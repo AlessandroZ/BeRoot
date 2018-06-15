@@ -1,8 +1,8 @@
-# BeRoot
+# BeRoot For Linux
 
 BeRoot is a post exploitation tool to check common misconfigurations on Linux and Mac OS to find a way to escalate our privilege. 
 
-To understand privilege escalation on these systems, you should understand at least two main notions: LOLBins (this name has been given for Windows binaries but it should be correct to use it for Linux as well) and Wildcards. 
+To understand privilege escalation on these systems, you should understand at least two main notions: LOLBins (this name has been given for Windows binaries but it should be correct to use it for Linux as well) and Wildcards. \
 This Readme explains all technics implemented by BeRoot to better understand how to exploit it. 
 
 LOLBins
