@@ -1,4 +1,4 @@
-# BeRoot
+# BeRoot For Windows
 
 BeRoot(s) is a post exploitation tool to check common Windows misconfigurations to find a way to escalate our privilege. \
 A compiled version is available [here](https://github.com/AlessandroZ/BeRoot/releases). 
