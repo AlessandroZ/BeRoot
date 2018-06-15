@@ -1,7 +1,8 @@
 # BeRoot Project 
 
 BeRoot Project is a post exploitation tool to check common misconfigurations to find a way to escalate our privilege. \
-It has been added to the [pupy](https://github.com/n1nj4sec/pupy/) project as a post exploitation module (so it will be executed in memory without touching the disk). \
+It has been added to the [pupy](https://github.com/n1nj4sec/pupy/) project as a post exploitation module (so it will be executed in memory without touching the disk). 
+
 This tool does not realize any exploitation. It mains goal is not to realize a configuration assessment of the host (listing all services, all processes, all network connection, etc.) but to print only information that have been found as potential way to escalate our privilege. 
 
 This project works on Windows, Linux and Mac OS. You could find the Windows version [here](https://github.com/AlessandroZ/BeRoot/tree/master/Windows) and the Linux and Mac OS [here](https://github.com/AlessandroZ/BeRoot/tree/master/Linux)
