@@ -40,7 +40,7 @@ class Checks():
 		out, err 	= process.communicate()
 		suid 		= []
 
-		for file in out.strip().split('\n'):			
+		for file in out.strip().decode().split('\n'):			
 			fm = FileManager(file)
 			suid.append(fm)
 		
