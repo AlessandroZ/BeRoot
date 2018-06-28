@@ -182,7 +182,7 @@ class FileManager():
 							'cmds' 			: commands,
 						}
 					)
-				except Exception, e: 
+				except Exception as e: 
 					# print traceback.print_exc()
 					pass
 

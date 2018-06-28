@@ -52,7 +52,7 @@ class Analyse():
 
 			# Check if file has write access
 			if self.is_writable(fm.file, user):
-				print '[+] Writable file: {file}\n'.format(file=fm.file.path)
+				print(('[+] Writable file: {file}\n'.format(file=fm.file.path)))
 				self.nothing_found = False
 
 			# Check path found inside files
@@ -65,12 +65,12 @@ class Analyse():
 
 				# Something has been found, print a clear output
 				if ok:
-					print '[!] Inside: {file}'.format(file=fm.file.path)
-					print '[!] Line: {line}'.format(line=sub.line)
+					print(('[!] Inside: {file}'.format(file=fm.file.path)))
+					print(('[!] Line: {line}'.format(line=sub.line)))
 					for p in sub.paths:
 						if self.is_writable(p, user):
-							print '[+] Writable path: {file}'.format(file=p.path)
-					print
+							print(('[+] Writable path: {file}'.format(file=p.path)))
+					print()
 					self.nothing_found = False
 
 				# Check for wildcards
@@ -85,11 +85,11 @@ class Analyse():
 							
 							# Check that the wildcard is added after the interesting binary
 							if sub.line.index(name) < sub.line.index('*'):
-								print '[!] Inside: {file}'.format(file=fm.file.path)
-								print '[!] Wildcard found on line: {line}'.format(line=sub.line)
-								print '[+] Interesting bin: {bin}'.format(bin=name)
-								print '[!] Shell escape method: \n{cmd}'.format(cmd=shell_escape)
-								print
+								print(('[!] Inside: {file}'.format(file=fm.file.path)))
+								print(('[!] Wildcard found on line: {line}'.format(line=sub.line)))
+								print(('[+] Interesting bin: {bin}'.format(bin=name)))
+								print(('[!] Shell escape method: \n{cmd}'.format(cmd=shell_escape)))
+								print()
 								self.nothing_found = False
 	
 
@@ -160,7 +160,7 @@ class Analyse():
 							else:
 								u = self.get_user(user=args.strip())
 								if u:
-									print '[!] Impersonating user "{user}" using line: {line}'.format(user=args.strip(), line=cmd.line.strip())
+									print(('[!] Impersonating user "{user}" using line: {line}'.format(user=args.strip(), line=cmd.line.strip())))
 									
 									# Check all sensitive files for write access using the impersonated user
 									self.anaylyse_files_permissions(self.sensitive_files, user=u, check_wildcards=False)
@@ -175,12 +175,12 @@ class Analyse():
 									msg = '[-] User not found: {user}'.format(user=args.strip())
 
 					if ok: 
-						print '[!] Sudoers line: {line}'.format(line=cmd.line.strip())
+						print(('[!] Sudoers line: {line}'.format(line=cmd.line.strip())))
 						if need_password:
-							print '[-] Password required'
+							print('[-] Password required')
 						else: 
-							print '[+] No password required (NOPASSWD used)'
-						print '{message}\n'.format(message=msg)
+							print('[+] No password required (NOPASSWD used)')
+						print(('{message}\n'.format(message=msg)))
 						self.nothing_found = False
 
 
@@ -190,28 +190,28 @@ class Analyse():
 			
 			if not only_write_access:
 				# Print every suid file (because a manually check should be done on these binaries)
-				print '[!] {suid}'.format(suid=suid.file.path)
+				print(('[!] {suid}'.format(suid=suid.file.path)))
 			
 			if self.is_writable(suid.file, user):
-				print '[+] Writable suid file'
+				print('[+] Writable suid file')
 				self.nothing_found = False
 			
 			if not only_write_access:
 				shell_escape = self.interesting_bin.find_binary(suid.file.basename)
 				if shell_escape: 
-					print '[+] Interesting bin: {bin}'.format(bin=suid.file.path)
-					print '[!] Shell escape method: \n{cmd}'.format(cmd=shell_escape)
+					print(('[+] Interesting bin: {bin}'.format(bin=suid.file.path)))
+					print(('[!] Shell escape method: \n{cmd}'.format(cmd=shell_escape)))
 					self.nothing_found = False
 
 	def anaylyse_docker(self, is_docker_installed):
 		
 		if is_docker_installed: 
-			print '[+] Docker service found !'
-			print '[!] Shell escape method: \n{cmd}'.format(cmd=self.interesting_bin.find_binary('docker'))
+			print('[+] Docker service found !')
+			print(('[!] Shell escape method: \n{cmd}'.format(cmd=self.interesting_bin.find_binary('docker'))))
 
 	def print_exploit_found(self, output): 
 		self.nothing_found = False
-		print output
+		print(output)
 
 	def anaylyse_result(self, module, result):
 
@@ -234,16 +234,16 @@ class Analyse():
 		Analyse all results found on the Checks classes 
 		'''
 		if os.geteuid() == 0:
-			print '[!] You are already root.'
+			print('[!] You are already root.')
 			return
 
 		for module, result in self.checks.run():
 			
-			print '\n################# {module} #################\n'.format(module=module.replace('_', ' ').capitalize())
+			print(('\n################# {module} #################\n'.format(module=module.replace('_', ' ').capitalize())))
 			
 			self.nothing_found = True
 			self.anaylyse_result(module, result)
 			if self.nothing_found: 
-				print '[-] Nothing found !'
+				print('[-] Nothing found !')
 
 

@@ -11,13 +11,13 @@ if __name__ == '__main__':
 	banner += '|                          ! BANG BANG !                             |\n'
 	banner += '|                                                                    |\n'
 	banner += '|====================================================================|\n\n'
-	print banner
+	print(banner)
 
 	start_time = time.time()
 
 	a = Analyse()
 	a.run()
-	print
+	print()
 	
 	elapsed_time = time.time() - start_time
-	print '[!] Elapsed time = ' + str(elapsed_time)
+	print(('[!] Elapsed time = ' + str(elapsed_time)))
