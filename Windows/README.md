@@ -118,6 +118,7 @@ Use the "_rasdial_" binary to start the IKEEXT service. Even if the connection f
 ```
 C:\Users\bob\Desktop>rasdial IKEEXTPOC test test /PHONEBOOK:test.txt
 ```
+Or you can try using the [Ikeext-Privesc](https://github.com/itm4n/Ikeext-Privesc) powershell script. 
 
 MS16-075
 ----
