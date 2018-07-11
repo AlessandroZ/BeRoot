@@ -9,6 +9,11 @@ This project works on Windows, Linux and Mac OS. You could find the Windows vers
 
 I recommend reading the README depending on the targeted OS, to better understand what's happening. 
 
+I tried to implement most technics described in this picture:
+
+<p align="center"><img src="./pictures/privilege_escalation_workflow.jpeg" alt="BeRoot"></p>
+
+
 Enjoy ;)
 
 
