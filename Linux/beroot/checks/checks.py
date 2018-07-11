@@ -90,8 +90,7 @@ class Checks():
 		Check sudoers file - /etc/sudoers
 		'''
 		result 	= []
-		# sfile 	= '/etc/sudoers'
-		sfile 	= '../../file'
+		sfile 	= '/etc/sudoers'
 		fm 		= FileManager(sfile)
 		
 		if fm.file.is_readable:
