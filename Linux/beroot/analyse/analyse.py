@@ -32,26 +32,26 @@ class Analyse():
 
 	def print_log(self, level='', msg=''):
 		prefix = ''
-		
+
 		if level == 'ok':
-			if self.color: 
+			if self.color:
 				prefix = self.bcolors.OK + '[+] ' + self.bcolors.ENDC
 			else:
 				prefix = '[+] '
 			self.nothing_found = False
 
-		elif level == 'error': 
-			if self.color: 
+		elif level == 'error':
+			if self.color:
 				prefix = self.bcolors.FAIL + '[-] ' + self.bcolors.ENDC
 			else:
 				prefix = '[-] '
-		
-		elif level == 'info': 
+
+		elif level == 'info':
 			prefix = '[!] '
-		
-		elif level == 'debug': 
+
+		elif level == 'debug':
 			prefix = '[?] '
-		
+
 		print('{prefix}{msg}'.format(prefix=prefix, msg=msg))
 
 	def is_writable(self, file, user):
@@ -69,13 +69,13 @@ class Analyse():
 				(mode & stat.S_IWOTH) 														# Others have write permission.
 			)
 
-	def get_user(self, user): 
+	def get_user(self, user):
 		'''
 		Find a user pw object from his name
-		- user is a string 
+		- user is a string
 		- u is an object
 		'''
-		for u in self.users.list: 
+		for u in self.users.list:
 			if u.pw_name == user:
 				return u
 
@@ -112,9 +112,9 @@ class Analyse():
 						if shell_escape:
 
 							# IMPROVEMENT: could be interesting to check if write permission on directory => to exploit wildcard, a file should be created.
-							# Check from where the script has been called 
+							# Check from where the script has been called
 							name = p.path if not p.alias else p.alias
-							
+
 							# Check that the wildcard is added after the interesting binary
 							if sub.line.index(name) < sub.line.index('*'):
 								self.print_log('info', 'Inside: {file}'.format(file=fm.file.path))
@@ -122,7 +122,7 @@ class Analyse():
 								self.print_log('ok', 'Interesting bin: {bin}'.format(bin=name))
 								self.print_log('info', 'Shell escape method: \n{cmd}\n'.format(cmd=shell_escape))
 
-	def anaylyse_sudoers(self, sudoers_info, ld_preload, user): 
+	def anaylyse_sudoers(self, sudoers_info, ld_preload, user):
 		'''
 		sudoers_info is a didctonary containing all rules found on the sudoers file
 		ld_preload variable is a boolean saying that LD_PRELOAD on the env_keep variable
@@ -136,35 +136,35 @@ class Analyse():
 		current_groupname = self.users.groups.getgrgid(user.pw_gid).gr_name
 
 		for sudoers in sudoers_info:
-			
+
 			need_password = True
 			# NOPASSWD is present, no password will be required to execute the commands
-			if 'NOPASSWD' in sudoers['directives']: 
+			if 'NOPASSWD' in sudoers['directives']:
 				need_password = False
 
 			# If the sudoers line affects the current user or his group
 			if user.pw_name in sudoers['users'] or '%{group}'.format(group=current_groupname) in sudoers['users']: # TO DO => or if match group
-				
+
 				for cmd in sudoers['cmds']:
-					ok 	= False 
+					ok 	= False
 					msg = []
-					
+
 					# Action denied, continue
 					if cmd.line.startswith('!'):
 						continue
 
 					# All access
-					elif cmd.line.strip() == 'ALL': 
+					elif cmd.line.strip() == 'ALL':
 						ok = True
-					
+
 					# All cmds available by the rule
-					for c in cmd.paths: 
-						
-						# If write permission on the file 
+					for c in cmd.paths:
+
+						# If write permission on the file
 						if self.is_writable(c, user):
 							ok 	= True
 							msg.append(('ok', 'Write permission on {file}'.format(file=c.path)))
-						
+
 						# Interesting binary found
 						shell_escape = self.interesting_bin.find_binary(c.basename)
 						if shell_escape:
@@ -180,17 +180,17 @@ class Analyse():
 								msg.append(('info', 'Should be exploitable using wildcards'))
 
 							# Let the user find if it's still exploitable => but not sure (could be a false positive)
-							else: 
+							else:
 								msg.append(('info', 'Could be a false positive'))
-							
+
 							msg.append(('ok', 'Interesting bin found: {bin}'.format(bin=c.basename)))
 							msg.append(('info','Shell escape method: \n{cmd}'.format(cmd=shell_escape)))
 
-						if c.basename == 'su': 
+						if c.basename == 'su':
 							args = cmd.line.strip()[cmd.line.strip().index(c.basename) + len(c.basename):].strip()
 
 							# Every users could impersonated or at least root
-							if args.strip() == '*' or args.strip() == 'root': 
+							if args.strip() == '*' or args.strip() == 'root':
 								ok = True
 								msg.append(('ok', 'Impersonnation can be done on root user'))
 
@@ -198,7 +198,7 @@ class Analyse():
 								u = self.get_user(user=args.strip())
 								if u:
 									self.print_log('info', 'Impersonating user "{user}" using line: {line}'.format(user=args.strip(), line=cmd.line.strip()))
-									
+
 									# Check all sensitive files for write access using the impersonated user
 									self.anaylyse_files_permissions(self.sensitive_files, user=u, check_wildcards=False)
 
@@ -208,96 +208,94 @@ class Analyse():
 									# Realize same check on sudoers file using the impersonated user
 									self.anaylyse_sudoers(sudoers_info=sudoers_info, ld_preload=False, user=u)
 
-								else: 
+								else:
 									ok 	= True # should be a false positive - however I prefer to prompt the command line to be sure
 									msg.append(('error', 'User not found: {user}'.format(user=args.strip())))
 
-					if ok: 
+					if ok:
 						self.print_log('info', 'Sudoers line: {line}'.format(line=cmd.line.strip()))
 						if need_password:
 							self.print_log('error', 'Password required')
-						else: 
+						else:
 							self.print_log('ok', 'No password required (NOPASSWD used)')
 
-						for m in msg: 
+						for m in msg:
 							self.print_log(m[0], m[1])
 
 
 	def anaylyse_suids(self, suids, user, ckeck_only_write_access=False):
-		
-		for suid in suids: 			
+
+		for suid in suids:
 			if not ckeck_only_write_access:
 				# Print every suid file (because a manually check should be done on these binaries)
 				self.print_log('info', '{suid}'.format(suid=suid.file.path))
-			
+
 			if self.is_writable(suid.file, user):
 				self.print_log('ok', 'Writable suid file')
-			
+
 			if not ckeck_only_write_access:
 				shell_escape = self.interesting_bin.find_binary(suid.file.basename)
-				if shell_escape: 
+				if shell_escape:
 					self.print_log('ok', 'Interesting bin: {bin}'.format(bin=suid.file.path))
 					self.print_log('info', 'Shell escape method: \n{cmd}'.format(cmd=shell_escape))
 
 	def anaylyse_nfs_conf(self, result, user):
-		
+
 		if result['result']:
 			self.print_log('ok', 'Directive no_root_squash found: "{line}"'.format(line=result['result']))
 
 	def anaylyse_docker(self, is_docker_installed):
-		
-		if is_docker_installed: 
-			print_log('ok', 'Docker service found !')
-			print_log('info', 'Shell escape method: \n{cmd}'.format(cmd=self.interesting_bin.find_binary('docker')))
+
+		if is_docker_installed:
+			self.print_log('ok', 'Docker service found !')
+			self.print_log('info', 'Shell escape method: \n{cmd}'.format(cmd=self.interesting_bin.find_binary('docker')))
 
 	def anaylyse_result(self, module, result):
-		''' 
+		'''
 		Launch parsing of results depending of the module
 		'''
-		if module == 'files_permissions': 
+		if module == 'files_permissions':
 			self.sensitive_files = result # Store data to do tests later
 			self.anaylyse_files_permissions(result, user=self.users.current) 	# users is a pwd objet
-		
+
 		elif module == 'sudoers_file':
 			self.anaylyse_sudoers(sudoers_info=result[0], ld_preload=result[1], user=self.users.current)
-		
-		elif module == 'suid_bin': 
+
+		elif module == 'suid_bin':
 			self.suid_files = result
 			self.anaylyse_suids(result, user=self.users.current)
-		
+
 		elif module == 'nfs_root_squashing':
 			self.anaylyse_nfs_conf(result, user=self.users.current)
-		
+
 		elif module == 'docker':
 			self.anaylyse_docker(result)
-		
+
 		elif module == 'exploit':
 			prefix = 'error'
 			output = result.decode()
-			if 'CVE' in output: 
+			if 'CVE' in output:
 				prefix = 'ok'
 			self.print_log(prefix, 'CVE found!\n{output}'.format(output=output))
 
 	def run(self):
 		'''
-		Analyse all results found on the Checks classes 
+		Analyse all results found on the Checks classes
 		'''
 		if os.geteuid() == 0:
 			self.print_log('error', 'You are already root.')
 			return
 
 		for module, result in self.checks.run():
-			
+
 			try:
 				self.print_log('', '\n################# {module} #################\n'.format(module=module.replace('_', ' ').capitalize()))
-				
+
 				self.nothing_found = True
 				self.anaylyse_result(module, result)
 				if self.nothing_found:
 					self.print_log('error', 'Nothing found !')
-			
+
 			except:
 				# Print full stracktrace to understand the error
 				self.print_log('error', traceback.format_exc())
-
-

@@ -19,7 +19,7 @@ class Checks():
 	def get_users(self):
 		'''
 		Get list of all users with their uid, gid
-		''' 
+		'''
 		return Users()
 
 	def get_possible_exploit(self):
@@ -40,26 +40,26 @@ class Checks():
 		out, err 	= process.communicate()
 		suid 		= []
 
-		for file in out.strip().decode().split('\n'):			
+		for file in out.strip().decode().split('\n'):
 			fm = FileManager(file)
 			suid.append(fm)
-		
+
 		return 'suid_bin', suid
 
 	def check_files_permissions(self):
 		'''
-		Check access on write permissions on sensitive files. 
+		Check access on write permissions on sensitive files.
 		'''
 		result 				= []
 		interesting_files 	= [
 			# directories
 			'/etc/init.d'
-			'/etc/cron.d', 
+			'/etc/cron.d',
 			'/etc/cron.daily',
 			'/etc/cron.hourly',
 			'/etc/cron.monthly',
 			'/etc/cron.weekly',
-			
+
 			# files
 			'/etc/sudoers',
 			'/etc/exports',
@@ -69,7 +69,7 @@ class Checks():
 			'/etc/cron.allow',
 			'/etc/cron.deny',
 			'/etc/anacrontab',
-			'/var/spool/cron/crontabs/root', 
+			'/var/spool/cron/crontabs/root',
 		]
 
 		for path in interesting_files:
@@ -89,10 +89,10 @@ class Checks():
 		'''
 		Check sudoers file - /etc/sudoers
 		'''
-		result 	= []
+		result 	= ([], False)
 		sfile 	= '/etc/sudoers'
 		fm 		= FileManager(sfile)
-		
+
 		if fm.file.is_readable:
 			result = fm.parse_sudoers(sfile)
 
@@ -112,7 +112,7 @@ class Checks():
 		return 'nfs_root_squashing', {'file': fm, 'result': result}
 
 
-	def is_docker_installed(self): 
+	def is_docker_installed(self):
 		'''
 		Check if docker service is present
 		'''
@@ -120,17 +120,17 @@ class Checks():
 		return (module, True) if os.path.exists('/etc/init.d/docker') else (module, False)
 
 	def run(self):
-		''' 
+		'''
 		Run all functions to retrieve system misconfigurations
 		'''
 		checks = [
-			self.check_files_permissions, 
+			self.check_files_permissions,
 			self.check_suid_bin,
 			self.check_nfs_root_squashing,
 			self.is_docker_installed,
 			self.check_sudoers,
 			self.get_possible_exploit,
 		]
-		
+
 		for check in checks:
 			yield check()
