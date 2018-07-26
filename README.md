@@ -11,7 +11,7 @@ I recommend reading the README depending on the targeted OS, to better understan
 
 I tried to implement most technics described in this picture:
 
-<p align="center"><img src="./pictures/privilege_escalation_workflow.jpeg" alt="BeRoot"></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/10668373/43284508-4f242070-911c-11e8-9b05-e0e9261ed3cb.jpeg" alt="BeRoot"></p>
 
 
 Enjoy ;)
