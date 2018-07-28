@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.objects.service import Service
 from beroot.modules.checks.path_manipulation_checks import get_path_info
 import win32service
@@ -17,7 +18,7 @@ class GetServices():
 				short_name = svc[0]
 				full_path = service_info[3]
 				sv = self.check_if_service_already_loaded(short_name, full_path, services_loaded)
-				
+
 				if sv:
 					sv.permissions = self.get_service_permissions(sv)
 
@@ -44,7 +45,7 @@ class GetServices():
 	# Check service permission of a service (if it can be started, stopped or modified)
 	def get_service_permissions(self, s):
 		hnd = win32service.OpenSCManager(None, None, win32service.SC_MANAGER_CONNECT)
-		
+
 		start = self.service_start(hnd, s)
 		stop = self.service_stop(hnd, s)
 		change_config = self.change_sercice_configuration(hnd, s)
@@ -53,7 +54,7 @@ class GetServices():
 
 	# check if a service can be started
 	def service_start(self, hnd, s):
-		try: 
+		try:
 			svcH = win32service.OpenService(hnd, s.name, win32service.SERVICE_START)
 			return True
 		except:
@@ -61,7 +62,7 @@ class GetServices():
 
 	# check if a service can be stopped
 	def service_stop(self, hnd, s):
-		try: 
+		try:
 			svcH = win32service.OpenService(hnd, s.name, win32service.SERVICE_STOP)
 			return True
 		except:
@@ -69,10 +70,8 @@ class GetServices():
 
 	# check if the configuration of a service can be changed
 	def change_sercice_configuration(self, hnd, s):
-		try: 
+		try:
 			svcH = win32service.OpenService(hnd, s.name, win32service.SERVICE_CHANGE_CONFIG)
 			return True
 		except:
 			return False
-
-	

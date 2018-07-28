@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.get_info.system_info import System
 from ctypes.wintypes import *
 from ctypes import *

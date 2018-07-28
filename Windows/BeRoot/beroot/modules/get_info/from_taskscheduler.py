@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Check Services
 from beroot.modules.checks.path_manipulation_checks import get_path_info
 from beroot.modules.objects.taskscheduler import Taskscheduler
@@ -13,7 +14,7 @@ class GetTaskschedulers():
 	def __init__(self):
 		self.task_directory = os.path.join(os.environ.get('systemroot'), 'system32\Tasks')
 		s = System()
-		
+
 		self.disable_redirection = False
 		if s.isx64:
 			self.disable_redirection = True
@@ -26,16 +27,16 @@ class GetTaskschedulers():
 			pass
 			# try:
 			# 	from win32com.taskscheduler import taskscheduler
-				
+
 			# 	ts = pythoncom.CoCreateInstance(
 			# 										taskscheduler.CLSID_CTaskScheduler,
-			# 										None, 
+			# 										None,
 			# 										pythoncom.CLSCTX_INPROC_SERVER,
 			# 										taskscheduler.IID_ITaskScheduler
 			# 									)
-			# except: 
+			# except:
 			# 	return False
-			
+
 			# Loop through all scheduled task
 			# tasks = ts.Enum()
 			# for job in tasks:
@@ -50,13 +51,13 @@ class GetTaskschedulers():
 				# if os.path.exists(taskpath):
 				# 	if checkPermissions(taskpath):
 				# 		results = results + '<strong><font color=ff0000>Write access on: ' + taskpath + '</font></strong><br/>\n'
-				
+
 				# run as
 				# try:
 				# 	t.runas = task.GetCreator()
 				# except:
 				# 	pass
-				
+
 				# path of the exe file
 				# try:
 					# task.GetApplicationName()
@@ -68,7 +69,7 @@ class GetTaskschedulers():
 				# 	test = checkPermissions(task.GetApplicationName())
 				# except:
 				# 	pass
-				
+
 		# manage task for windows 7
 		else:
 			if self.disable_redirection:
@@ -123,13 +124,13 @@ class GetTaskschedulers():
 
 						full_path = '%s %s' % (str(command), str(arguments))
 						full_path = full_path.strip()
-						
+
 						if full_path: #and runlevel != 'LeastPrivilege':
 							t = Taskscheduler()
 							t.name = f
 							t.full_path = full_path
 							t.paths = get_path_info(t.full_path)
-							
+
 							if userid == 'S-1-5-18':
 								t.userid = 'LocalSystem'
 							else:
@@ -137,12 +138,11 @@ class GetTaskschedulers():
 
 							t.groupid = groupid
 							t.runlevel = runlevel
-							
+
 							# append the tasks to the main tasklist
 							tasks_list.append(t)
-			
+
 			if self.disable_redirection:
 				ctypes.windll.kernel32.Wow64EnableWow64FsRedirection(wow64)
 
 		return tasks_list
-						

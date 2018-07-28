@@ -1,17 +1,18 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.objects.path import Path
 import ntpath
 import os
 import re
 
 # check the permission of an exe file
-def isRootDirectoryWritable(path, isDir=False):	
+def isRootDirectoryWritable(path, isDir=False):
 	if isDir:
 		dirname = path
 	else:
 		dirname = ntpath.dirname(path)
 
 	new_path = os.path.join(dirname, "a.txt")
-	
+
 	try:
 		f = open(new_path, "w")
 		f.close()
@@ -25,7 +26,7 @@ def getSubDirWritable(path):
 	path = os.path.dirname(path).split(os.sep)
 	tmp_path = os.path.join(path[0], os.sep)
 	for i in path[1:]:
-		if " " in i and isRootDirectoryWritable(tmp_path, True):				
+		if " " in i and isRootDirectoryWritable(tmp_path, True):
 			results.append(tmp_path)
 		tmp_path = os.path.join(tmp_path, i)
 	return results
@@ -51,10 +52,10 @@ def get_path_info(path):
 
 		paths.append(
 			Path(
-				path=path, 
-				hasSpace=hasSpace, 
-				hasQuotes=hasQuotes, 
-				isDirWritable=isRootDirectoryWritable(path), 
+				path=path,
+				hasSpace=hasSpace,
+				hasQuotes=hasQuotes,
+				isDirWritable=isRootDirectoryWritable(path),
 				subDirWritables=getSubDirWritable(path)
 			)
 		)
@@ -103,7 +104,7 @@ def format_results(sk, p, checkSubdir=False):
 
 	results['Name'] = sk.name
 	results['Full path'] = sk.full_path
-	
+
 	if not checkSubdir:
 		results['Writable directory'] = os.path.dirname(p.path)
 	else:

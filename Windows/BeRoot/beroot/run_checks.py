@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.checks.path_manipulation_checks import isRootDirectoryWritable, space_and_no_quotes, exe_with_writable_directory
 from beroot.modules.checks.services_checks import check_services_creation_with_openscmanager, check_service_permissions
 from beroot.modules.checks.filesystem_checks import check_unattended_files, check_sysprep_files, checks_writeable_directory_on_path_environment_variable, check_well_known_dll_injections
@@ -13,9 +14,9 @@ import traceback
 import platform
 
 class RunChecks():
-	
+
 	def __init__(self):
-		
+
 		# Load info from registry
 		r = Registry()
 		self.service = r.get_services_from_registry()
@@ -24,7 +25,7 @@ class RunChecks():
 		# Load info using the SCManager
 		s = GetServices()
 		self.service = s.get_services(self.service)
-		
+
 		# check taskscheduler
 		self.t = GetTaskschedulers()
 		self.task = self.t.tasksList()
@@ -39,9 +40,9 @@ class RunChecks():
 		# returns a tab of string
 		b = registry_key_with_write_access(obj)
 		if b:
-			results.append( 
+			results.append(
 				{
-					'Function': 'registry key with writable access', 
+					'Function': 'registry key with writable access',
 					'Results' : b
 				}
 			)
@@ -50,13 +51,13 @@ class RunChecks():
 	# check path misconfiguration
 	def _check_path_misconfiguration(self, obj):
 		results = []
-		
+
 		# returns a tab of dictionnary
 		b = space_and_no_quotes(obj)
 		if b:
 			results.append(
 				{
-					'Function': 'path containing spaces without quotes', 
+					'Function': 'path containing spaces without quotes',
 					'Results' : b
 				}
 			)
@@ -66,13 +67,13 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'binary located on a writable directory', 
+					'Function': 'binary located on a writable directory',
 					'Results' : b
 				}
 			)
 
 		return results
-		
+
 	# ------------------------------ By category ------------------------------
 
 	# Services
@@ -81,10 +82,10 @@ class RunChecks():
 
 		# return a boolean
 		b = check_services_creation_with_openscmanager()
-		if b: 
+		if b:
 			results.append(
 				{
-					'Function': 'permission to create a service with openscmanager', 
+					'Function': 'permission to create a service with openscmanager',
 					'Results' : b
 				}
 			)
@@ -94,7 +95,7 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'Check services that could its configuration could be modified', 
+					'Function': 'Check services that could its configuration could be modified',
 					'Results' : b
 				}
 			)
@@ -103,8 +104,8 @@ class RunChecks():
 		results += self._check_registry_misconfiguration(self.service)
 
 		return {
-			'Category': 'Service', 
-			'All' : results
+			'Category'	: 'Service',
+			'All' 		: results
 		}
 
 	# Start up keys
@@ -112,10 +113,10 @@ class RunChecks():
 
 		results = self._check_registry_misconfiguration(self.startup)
 		results += self._check_path_misconfiguration(self.startup)
-		
+
 		return {
-			'Category': 'Startup Keys', 
-			'All' : results
+			'Category'	: 'Startup Keys',
+			'All' 		: results
 		}
 
 	# MSI configuration
@@ -125,13 +126,13 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'All MSI file are launched with SYSTEM privileges', 
+					'Function': 'All MSI file are launched with SYSTEM privileges',
 					'Results' : b
 				}
-			)		
+			)
 		return {
-			'Category': 'MSI misconfiguration', 
-			'All' : results
+			'Category'	: 'MSI misconfiguration',
+			'All' 		: results
 		}
 
 	# Taskscheduler
@@ -143,16 +144,16 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'permission to write on the task directory: %s' % self.t.task_directory, 
+					'Function': 'permission to write on the task directory: %s' % self.t.task_directory,
 					'Results' : b
 				}
 			)
 
 		results += self._check_path_misconfiguration(self.task)
-		
+
 		return {
-			'Category': 'Taskscheduler', 
-			'All' : results
+			'Category'	: 'Taskscheduler',
+			'All' 		: results
 		}
 
 	# interesting files on the file system
@@ -164,7 +165,7 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'Unattend file found', 
+					'Function': 'Unattend file found',
 					'Results' : b
 				}
 			)
@@ -174,18 +175,18 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'Unattend file found', 
+					'Function': 'Unattend file found',
 					'Results' : b
 				}
 			)
-		
+
 
 		return {
-			'Category': 'Interesting files', 
-			'All' : results
+			'Category'	: 'Interesting files',
+			'All' 		: results
 		}
 
-	# useful to find Windows Redistributable version or softwares vulnerable 
+	# useful to find Windows Redistributable version or softwares vulnerable
 	def get_installed_softwares(self):
 
 		sof_list = []
@@ -194,18 +195,18 @@ class RunChecks():
 
 		results = [
 			{
-				'Function': 'softwares installed', 
+				'Function': 'softwares installed',
 				'Results' : sof_list
 			},
 			{
-				'Function': 'av installed', 
+				'Function': 'av installed',
 				'Results' : self.softwares.get_av_software()
 			}
 		]
 
 		return {
-			'Category': 'Softwares installed', 
-			'All' : results
+			'Category'	: 'Softwares installed',
+			'All' 		: results
 		}
 
 	# check if the user is on already administrator
@@ -217,19 +218,19 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'is user in the administrator group', 
+					'Function': 'is user in the administrator group',
 					'Results' : b
 				}
 			)
-		
+
 		return {
-			'Category': 'Check user admin', 
-			'All' : results
+			'Category'	: 'Check user admin',
+			'All' 		: results
 		}
 
 	# this technic should not work on windows 10
 	def get_well_known_dll_injections(self, args):
-		
+
 		results = []
 
 		# From msdn: https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
@@ -246,7 +247,7 @@ class RunChecks():
 			if b:
 				results.append(
 					{
-						'Function': 'Writeable path on the path environment variable', 
+						'Function': 'Writeable path on the path environment variable',
 						'Results' : b
 					}
 				)
@@ -256,21 +257,21 @@ class RunChecks():
 				if b:
 					results.append(
 						{
-							'Function': 'Check if well known vulnerable services are present', 
+							'Function': 'Check if well known vulnerable services are present',
 							'Results' : b
 						}
 					)
-		
+
 		return {
-			'Category': 'Check well known dlls hijacking', 
-			'All' : results
+			'Category'	: 'Check well known dlls hijacking',
+			'All' 		: results
 		}
 
 	# this technic has been patched on June 2016
 	def check_webclient(self, cmd='whoami'):
 		results = []
 
-		print '-------------- Get System Priv with WebClient --------------\n'
+		print('-------------- Get System Priv with WebClient --------------\n')
 
 		w = WebClient()
 		# returns boolean
@@ -278,15 +279,15 @@ class RunChecks():
 		if b:
 			results.append(
 				{
-					'Function': 'NTLM System token retrieved: ', 
+					'Function': 'NTLM System token retrieved: ',
 					'Results' : b
 				}
 			)
 
 		return {
-			'NotPrint': True,
-			'Category': 'Get System Priv with WebClient', 
-			'All' : results
+			'NotPrint'	: True,
+			'Category'	: 'Get System Priv with WebClient',
+			'All' 		: results
 		}
 
 def get_sofwares():
@@ -318,14 +319,12 @@ def check_all(cmd=None):
 				yield results
 		except:
 			yield {
-				'Category': 'Error on: %s' % str(c.__name__), 
-				'All': str(traceback.format_exc())
+				'Category'	: 'Error on: %s' % str(c.__name__),
+				'All'		: str(traceback.format_exc())
 			}
 
 	if not found:
 		yield {
-			'Category': 'No Luck', 
-			'All': '\nNothing found !'
+			'Category'	: 'No Luck',
+			'All'		: '\nNothing found !'
 		}
-	
-	

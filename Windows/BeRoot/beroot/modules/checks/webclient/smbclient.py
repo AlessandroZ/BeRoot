@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from impacket.smb import NewSMBPacket, SMBCommand, SMB, SMBSessionSetupAndX_Data, SMBSessionSetupAndX_Extended_Data, \
 	SMBSessionSetupAndX_Extended_Response_Parameters, SMBSessionSetupAndX_Extended_Response_Data, \
 	SMBSessionSetupAndX_Parameters, SMBSessionSetupAndX_Extended_Parameters, TypesMech
@@ -14,9 +15,9 @@ class SMBClient(SMB):
 	def sendAuth(self, serverChallenge, authenticateMessageBlob):
 		smb = NewSMBPacket()
 		smb['Flags1'] = SMB.FLAGS1_PATHCASELESS
-		smb['Flags2'] = SMB.FLAGS2_EXTENDED_SECURITY 
+		smb['Flags2'] = SMB.FLAGS2_EXTENDED_SECURITY
 		# Are we required to sign SMB? If so we do it, if not we skip it
-		if self._SignatureRequired: 
+		if self._SignatureRequired:
 		   smb['Flags2'] |= SMB.FLAGS2_SMB_SECURITY_SIGNATURE
 		smb['Uid'] = self._uid
 
@@ -49,18 +50,18 @@ class SMBClient(SMB):
 		# 		errorCode = self.netlogonSessionKey(serverChallenge, authenticateMessageBlob)
 		# 	except:
 		# 		#import traceback
-		# 		#print traceback.print_exc()
+		# 		#print(traceback.print_exc())
 		# 		raise
 		return smb, errorCode
 
 	def sendNegotiate(self, negotiateMessage):
 		smb = NewSMBPacket()
 		smb['Flags1'] = SMB.FLAGS1_PATHCASELESS
-		smb['Flags2'] = SMB.FLAGS2_EXTENDED_SECURITY 
+		smb['Flags2'] = SMB.FLAGS2_EXTENDED_SECURITY
 		# Are we required to sign SMB? If so we do it, if not we skip it
-		if self._SignatureRequired: 
+		if self._SignatureRequired:
 			smb['Flags2'] |= SMB.FLAGS2_SMB_SECURITY_SIGNATURE
-		
+
 		sessionSetup = SMBCommand(SMB.SMB_COM_SESSION_SETUP_ANDX)
 		sessionSetup['Parameters'] = SMBSessionSetupAndX_Extended_Parameters()
 		sessionSetup['Data']       = SMBSessionSetupAndX_Extended_Data()
@@ -74,7 +75,7 @@ class SMBClient(SMB):
 		# Let's build a NegTokenInit with the NTLMSSP
 		# TODO: In the future we should be able to choose different providers
 
-		blob = SPNEGO_NegTokenInit() 
+		blob = SPNEGO_NegTokenInit()
 
 		# NTLMSSP
 		blob['MechTypes'] = [TypesMech['NTLMSSP - Microsoft NTLM Security Support Provider']]
@@ -95,7 +96,7 @@ class SMBClient(SMB):
 		try:
 			smb.isValidAnswer(SMB.SMB_COM_SESSION_SETUP_ANDX)
 		except Exception:
-			print "SessionSetup Error!"
+			print("SessionSetup Error!")
 			raise
 		else:
 			# We will need to use this uid field for all future requests/responses

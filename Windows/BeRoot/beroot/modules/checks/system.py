@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 import sys
 import ctypes
 from ctypes import wintypes
 from ctypes import *
 
-READ_CONTROL                        = 0x00020000L
+READ_CONTROL                        = 0x00020000
 STANDARD_RIGHTS_READ                = READ_CONTROL
 TOKEN_QUERY                         = 0x0008
 TOKEN_READ                          = (STANDARD_RIGHTS_READ | TOKEN_QUERY)
@@ -44,7 +45,7 @@ def can_get_admin_access():
             try:
                 cls = TokenLinkedToken
                 ctypes.windll.advapi32.GetTokenInformation(token,cls,byref(lToken),sizeof(lToken),byref(sz))
-            except WindowsError, e:
+            except WindowsError as e:
                 if e.winerror == ERROR_NO_SUCH_LOGON_SESSION:
                     return False
                 elif e.winerror == ERROR_PRIVILEGE_NOT_HELD:
@@ -59,10 +60,10 @@ def can_get_admin_access():
                 ctypes.windll.kernel32.CloseHandle(lToken)
         finally:
             ctypes.windll.kernel32.CloseHandle(token)
-    except Exception,e:
+    except Exception as e:
         return None
     finally:
         try:
             ctypes.windll.kernel32.CloseHandle(proc)
-        except Exception,e:
+        except Exception as e:
             pass

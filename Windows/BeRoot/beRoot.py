@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 from beroot.run_checks import check_all, get_sofwares
 import argparse
 import time
@@ -9,18 +10,18 @@ def print_output(output, write=False, file=None):
 	if 'NotPrint' in output:
 		toPrint = False
 
-	st = '\n################ %s ################\n' % output['Category']
+	st = ('\n################ {category} ################\n').format(category=output['Category'])
 
 	if 'list' in str(type(output['All'])):
 		output['All'] = sorted(output['All'], key=lambda x: output['All'])
-		for resultss in output['All']:	
+		for resultss in output['All']:
 			st += '\n[!] %s\n' % resultss['Function'].capitalize()
 			results = resultss['Results']
 
 			# return only one result (True or False)
 			if 'bool' in str(type(results)):
 				st += '%s\n' % str(results)
-			
+
 			elif 'dict' in str(type(results)):
 				for result in results:
 					if 'list' in str(type(results[result])):
@@ -46,15 +47,15 @@ def print_output(output, write=False, file=None):
 		st += output['All']
 
 	if toPrint:
-		print str(st)
-	
+		print(str(st))
+
 	if write:
 		f = open(file, 'a')
 		f.write(st)
 		f.close()
 
 def run(cmd, listSoftwares, write):
-	
+
 	if not listSoftwares:
 		# realize all classic checks
 		for r in check_all(cmd):
@@ -76,7 +77,7 @@ if __name__ == '__main__':
 	banner += '|                                                                    |\n'
 	banner += '|====================================================================|\n\n'
 
-	print banner
+	print(banner)
 
 	parser = argparse.ArgumentParser(description="Windows Privilege Escalation")
 	parser.add_argument("-l", "--list", action="store_true", help="list all softwares installed (not run by default)")
@@ -100,4 +101,4 @@ if __name__ == '__main__':
 			pass
 
 	elapsed_time = time.time() - start_time
-	print '\n[!] Elapsed time = ' + str(elapsed_time)
+	print('\n[!] Elapsed time = ' + str(elapsed_time))

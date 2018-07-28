@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.objects.winstructures import *
 import _winreg
 

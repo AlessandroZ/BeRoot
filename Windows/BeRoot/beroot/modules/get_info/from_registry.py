@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.checks.path_manipulation_checks import get_path_info
 from beroot.modules.objects.service import Service
 from beroot.modules.objects.registry import Registry_key
@@ -6,9 +7,9 @@ import _winreg
 import os
 
 class Registry():
-			
+
 	# --------------------------------------- StartUp Key functions ---------------------------------------
-	
+
 	def definePath(self):
 		runkeys_hklm = [
 			r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
@@ -21,12 +22,12 @@ class Registry():
 			r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnceService"
 		]
 		return runkeys_hklm
-	
-	# read all startup key 
+
+	# read all startup key
 	def get_sensitive_registry_key(self):
 		keys = []
 		runkeys_hklm = self.definePath()
-		
+
 		# access either in read only mode, or in write mode
 		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
@@ -52,7 +53,7 @@ class Registry():
 				# loop through number of value in the key
 				for x in range(0, num):
 					k = _winreg.EnumValue(hkey, x)
-					
+
 					stk = Registry_key()
 					if is_key_writable:
 						stk.is_key_writable = is_key_writable
@@ -70,7 +71,7 @@ class Registry():
 		return keys
 
 	# --------------------------------------- Service Key functions ---------------------------------------
-	
+
 	# read all service information from registry
 	def get_services_from_registry(self):
 		service_keys = []
@@ -81,15 +82,15 @@ class Registry():
 
 		hkey = OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services', 0, accessRead)
 		num = _winreg.QueryInfoKey(hkey)[0]
-		
+
 		# loop through all subkeys
 		for x in range(0, num):
 			sk = Service()
-			
+
 			# Name of the service
 			svc = _winreg.EnumKey(hkey, x)
 			sk.name = svc
-			
+
 			# ------ Check Write access of the key ------
 			try:
 					sk.key = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
@@ -124,7 +125,6 @@ class Registry():
 						sk.paths = get_path_info(image_path)
 			except:
 				pass
-			
+
 			service_keys.append(sk)
 		return service_keys
-	

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beroot.modules.objects.winstructures import *
 import ctypes
 
@@ -5,13 +6,13 @@ import ctypes
 def check_services_creation_with_openscmanager():
 	isPossible = False
 	try:
-		# open the SCM with "SC_MANAGER_CREATE_SERVICE" rights 
+		# open the SCM with "SC_MANAGER_CREATE_SERVICE" rights
 		createServ = OpenSCManager(None, None, SC_MANAGER_CREATE_SERVICE)
 		if ctypes.GetLastError() == 0:
 			return True
-	except: 
+	except:
 		pass
-	
+
 	return False
 
 # returns all services that could be modified
@@ -28,4 +29,3 @@ def check_service_permissions(services):
 					}
 				)
 	return results
-		

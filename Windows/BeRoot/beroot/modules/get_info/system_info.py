@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import ctypes
 import os
 
@@ -28,7 +29,7 @@ class System():
 		return '%s.%s' % (str(os_version.dwMajorVersion.real), str(os_version.dwMinorVersion.real))
 
 	def isx64machine(self):
-		
+
 		archi = os.environ.get("PROCESSOR_ARCHITEW6432", '')
 		if '64' in archi:
 			return True

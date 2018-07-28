@@ -21,8 +21,8 @@
 #                   It's copied on the temp dir and parsed remotely.
 #
 #              The script initiates the services required for its working
-#              if they are not available (e.g. Remote Registry, even if it is 
-#              disabled). After the work is done, things are restored to the 
+#              if they are not available (e.g. Remote Registry, even if it is
+#              disabled). After the work is done, things are restored to the
 #              original state.
 #
 # Author:
@@ -74,8 +74,8 @@ try:
     from Crypto.Cipher import DES, ARC4, AES
     from Crypto.Hash import HMAC, MD4
 except ImportError:
-    logging.critical("Warning: You don't have any crypto installed. You need PyCrypto")
-    logging.critical("See http://www.pycrypto.org/")
+    print("Warning: You don't have any crypto installed. You need PyCrypto")
+    #logging.critical("See http://www.pycrypto.org/")
 
 
 # Structures
@@ -358,9 +358,9 @@ class RemoteOperations:
         request['pextClient']['cb'] = len(drs)
         request['pextClient']['rgb'] = list(str(drs))
         resp = self.__drsr.request(request)
-        if logging.getLogger().level == logging.DEBUG:
-            logging.debug('DRSBind() answer')
-            resp.dump()
+        # if logging.getLogger().level == logging.DEBUG:
+        #     logging.debug('DRSBind() answer')
+        #     resp.dump()
 
         # Let's dig into the answer to check the dwReplEpoch. This field should match the one we send as part of
         # DRSBind's DRS_EXTENSIONS_INT(). If not, it will fail later when trying to sync data.
@@ -373,9 +373,9 @@ class RemoteOperations:
 
         if drsExtensionsInt['dwReplEpoch'] != 0:
             # Different epoch, we have to call DRSBind again
-            if logging.getLogger().level == logging.DEBUG:
-                logging.debug("DC's dwReplEpoch != 0, setting it to %d and calling DRSBind again" % drsExtensionsInt[
-                    'dwReplEpoch'])
+            # if logging.getLogger().level == logging.DEBUG:
+            #     logging.debug("DC's dwReplEpoch != 0, setting it to %d and calling DRSBind again" % drsExtensionsInt[
+                    # 'dwReplEpoch'])
             drs['dwReplEpoch'] = drsExtensionsInt['dwReplEpoch']
             request['pextClient']['cb'] = len(drs)
             request['pextClient']['rgb'] = list(str(drs))
@@ -385,14 +385,14 @@ class RemoteOperations:
 
         # Now let's get the NtdsDsaObjectGuid UUID to use when querying NCChanges
         resp = drsuapi.hDRSDomainControllerInfo(self.__drsr, self.__hDrs, self.__domainName, 2)
-        if logging.getLogger().level == logging.DEBUG:
-            logging.debug('DRSDomainControllerInfo() answer')
-            resp.dump()
+        # if logging.getLogger().level == logging.DEBUG:
+        #     logging.debug('DRSDomainControllerInfo() answer')
+        #     resp.dump()
 
         if resp['pmsgOut']['V2']['cItems'] > 0:
             self.__NtdsDsaObjectGuid = resp['pmsgOut']['V2']['rItems'][0]['NtdsDsaObjectGuid']
         else:
-            logging.error("Couldn't get DC info for domain %s" % self.__domainName)
+            # logging.error("Couldn't get DC info for domain %s" % self.__domainName)
             raise Exception('Fatal, aborting')
 
     def getDrsr(self):
@@ -403,7 +403,7 @@ class RemoteOperations:
         if self.__drsr is None:
             self.__connectDrds()
 
-        logging.debug('Calling DRSCrackNames for %s ' % name)
+        # logging.debug('Calling DRSCrackNames for %s ' % name)
         resp = drsuapi.hDRSCrackNames(self.__drsr, self.__hDrs, 0, formatOffered, formatDesired, (name,))
         return resp
 
@@ -465,7 +465,7 @@ class RemoteOperations:
                                                                        samr.USER_SERVER_TRUST_ACCOUNT |\
                                                                        samr.USER_INTERDOMAIN_TRUST_ACCOUNT,
                                                     enumerationContext=enumerationContext)
-        except DCERPCException, e:
+        except DCERPCException as e:
             if str(e).find('STATUS_MORE_ENTRIES') < 0:
                 raise
             resp = e.get_packet()
@@ -522,7 +522,7 @@ class RemoteOperations:
             if account.startswith('.\\'):
                 account = account[2:]
             return account
-        except Exception, e:
+        except Exception as e:
             logging.error(e)
             return None
 
@@ -594,10 +594,10 @@ class RemoteOperations:
                 scmr.hRCloseServiceHandle(self.__scmr, self.__serviceHandle)
                 scmr.hRCloseServiceHandle(self.__scmr, self.__scManagerHandle)
                 rpc.disconnect()
-            except Exception, e:
+            except Exception as e:
                 # If service is stopped it'll trigger an exception
                 # If service does not exist it'll trigger an exception
-                # So. we just wanna be sure we delete it, no need to 
+                # So. we just wanna be sure we delete it, no need to
                 # show this exception message
                 pass
 
@@ -628,7 +628,7 @@ class RemoteOperations:
 
         bootKey = unhexlify(bootKey)
 
-        for i in xrange(len(bootKey)):
+        for i in range(len(bootKey)):
             self.__bootKey += bootKey[transforms[i]]
 
         logging.info('Target system bootKey: 0x%s' % hexlify(self.__bootKey))
@@ -706,7 +706,7 @@ class RemoteOperations:
             try:
                 self.__smbConnection.getFile('ADMIN$', 'Temp\\__output', self.__answer)
                 break
-            except Exception, e:
+            except Exception as e:
                 if tries > 30:
                     # We give up
                     raise Exception('Too many tries trying to list vss shadows')
@@ -982,7 +982,7 @@ class SAMHashes(OfflineRegistry):
 
             answer =  "%s:%d:%s:%s:::" % (userName, rid, hexlify(lmHash), hexlify(ntHash))
             self.__itemsFound[rid] = answer
-            print answer
+            print(answer)
 
     def export(self, fileName):
         if len(self.__itemsFound) > 0:
@@ -1142,7 +1142,7 @@ class LSASecrets(OfflineRegistry):
                 domainLong = plainText[:self.__pad(record['FullDomainLength'])].decode('utf-16le')
                 answer = "%s:%s:%s:%s:::" % (userName, hexlify(encHash), domainLong, domain)
                 self.__cachedItems.append(answer)
-                print answer
+                print(answer)
 
     def __printSecret(self, name, secretItem):
         # Based on [MS-LSAD] section 3.1.1.4
@@ -1220,7 +1220,7 @@ class LSASecrets(OfflineRegistry):
                 secret = "$MACHINE.ACC: %s:%s" % (hexlify(ntlm.LMOWFv1('','')), hexlify(md4.digest()))
 
         if secret != '':
-            print secret
+            print(secret)
             self.__secretItems.append(secret)
         else:
             # Default print, hexdump
@@ -1405,7 +1405,7 @@ class NTDSHashes:
             self.__ESEDB = ESENT_DB(ntdsFile, isRemote = isRemote)
             self.__cursor = self.__ESEDB.openTable('datatable')
         self.__tmpUsers = list()
-        self.__PEK = list() 
+        self.__PEK = list()
         self.__cryptoCommon = CryptoCommon()
         self.__kerberosKeys = OrderedDict()
         self.__clearTextPwds = OrderedDict()
@@ -1432,7 +1432,7 @@ class NTDSHashes:
                 # Okey.. we found some users, but we're not yet ready to process them.
                 # Let's just store them in a temp list
                 self.__tmpUsers.append(record)
-        
+
         if peklist is not None:
             encryptedPekList = self.PEKLIST_ENC(peklist)
             if encryptedPekList['Header'][:4] == '\x02\x00\x00\x00':
@@ -1527,7 +1527,7 @@ class NTDSHashes:
                 try:
                     attId = drsuapi.OidFromAttid(prefixTable, attr['attrTyp'])
                     LOOKUP_TABLE = self.ATTRTYP_TO_ATTID
-                except Exception, e:
+                except Exception as e:
                     logging.debug('Failed to execute OidFromAttid with error %s' % e)
                     # Fallbacking to fixed table and hope for the best
                     attId = attr['attrTyp']
@@ -1656,7 +1656,7 @@ class NTDSHashes:
             answer = "%s:%s:%s:%s:::" % (userName, rid, hexlify(LMHash), hexlify(NTHash))
             if self.__pwdLastSet is True:
                 answer = "%s (pwdLastSet=%s)" % (answer, pwdLastSet)
-            print answer
+            print(answer)
 
             if outputFile is not None:
                 self.__writeOutput(outputFile, answer + '\n')
@@ -1697,7 +1697,7 @@ class NTDSHashes:
                     answer = "%s_history%d:%s:%s:%s:::" % (userName, i, rid, lmhash, hexlify(NTHash))
                     if outputFile is not None:
                         self.__writeOutput(outputFile, answer + '\n')
-                    print answer
+                    print(answer)
         else:
             replyVersion = 'V%d' %record['pdwOutVersion']
             logging.debug('Decrypting hash for user: %s' % record['pmsgOut'][replyVersion]['pNC']['StringName'][:-1])
@@ -1712,7 +1712,7 @@ class NTDSHashes:
                 try:
                     attId = drsuapi.OidFromAttid(prefixTable, attr['attrTyp'])
                     LOOKUP_TABLE = self.ATTRTYP_TO_ATTID
-                except Exception, e:
+                except Exception as e:
                     logging.debug('Failed to execute OidFromAttid with error %s, fallbacking to fixed table' % e)
                     # Fallbacking to fixed table and hope for the best
                     attId = attr['attrTyp']
@@ -1790,7 +1790,7 @@ class NTDSHashes:
             answer = "%s:%s:%s:%s:::" % (userName, rid, hexlify(LMHash), hexlify(NTHash))
             if self.__pwdLastSet is True:
                 answer = "%s (pwdLastSet=%s)" % (answer, pwdLastSet)
-            print answer
+            print(answer)
 
             if outputFile is not None:
                 self.__writeOutput(outputFile, answer + '\n')
@@ -1804,7 +1804,7 @@ class NTDSHashes:
                         lmhash = hexlify(LMHashHistory)
 
                     answer = "%s_history%d:%s:%s:%s:::" % (userName, i, rid, lmhash, hexlify(NTHashHistory))
-                    print answer
+                    print(answer)
                     if outputFile is not None:
                         self.__writeOutput(outputFile, answer + '\n')
 
@@ -1858,9 +1858,9 @@ class NTDSHashes:
                         self.__decryptHash(record, outputFile=hashesOutputFile)
                         if self.__justNTLM is False:
                             self.__decryptSupplementalInfo(record, None, keysOutputFile, clearTextOutputFile)
-                    except Exception, e:
+                    except Exception as e:
                         # import traceback
-                        # print traceback.print_exc()
+                        # print(traceback.print_exc())
                         try:
                             logging.error(
                                 "Error while processing row for user %s" % record[self.NAME_TO_INTERNAL['name']])
@@ -1886,9 +1886,9 @@ class NTDSHashes:
                             self.__decryptHash(record, outputFile=hashesOutputFile)
                             if self.__justNTLM is False:
                                 self.__decryptSupplementalInfo(record, None, keysOutputFile, clearTextOutputFile)
-                    except Exception, e:
+                    except Exception as e:
                         # import traceback
-                        # print traceback.print_exc()
+                        # print(traceback.print_exc())
                         try:
                             logging.error(
                                 "Error while processing row for user %s" % record[self.NAME_TO_INTERNAL['name']])
@@ -1908,7 +1908,7 @@ class NTDSHashes:
                 # Yes
                 try:
                     resumeFile = open(self.__savedSessionFile, 'rwb+')
-                except Exception, e:
+                except Exception as e:
                     raise Exception('Cannot open resume session file name %s' % str(e))
                 resumeSid = resumeFile.read().strip('\n')
                 logging.info('Resuming from SID %s, be patient' % resumeSid)
@@ -1925,7 +1925,7 @@ class NTDSHashes:
                     try:
                         resumeFile = open(tmpName, 'wb+')
                         self.__resumeSessionFile = tmpName
-                    except Exception, e:
+                    except Exception as e:
                         raise Exception('Cannot create resume session file %s' % str(e))
 
             if self.__justUser is not None:
@@ -1955,7 +1955,7 @@ class NTDSHashes:
                         self.__decryptSupplementalInfo(userRecord, userRecord['pmsgOut'][replyVersion]['PrefixTableSrc'][
                             'pPrefixEntry'], keysOutputFile, clearTextOutputFile)
 
-                except Exception, e:
+                except Exception as e:
                     #import traceback
                     #traceback.print_exc()
                     logging.error("Error while processing user!")
@@ -2008,7 +2008,7 @@ class NTDSHashes:
                                 self.__decryptSupplementalInfo(userRecord, userRecord['pmsgOut'][replyVersion]['PrefixTableSrc'][
                                     'pPrefixEntry'], keysOutputFile, clearTextOutputFile)
 
-                        except Exception, e:
+                        except Exception as e:
                             #import traceback
                             #traceback.print_exc()
                             logging.error("Error while processing user!")
@@ -2039,7 +2039,7 @@ class NTDSHashes:
                 logging.info('Kerberos keys grabbed')
 
             for itemKey in self.__kerberosKeys.keys():
-                print itemKey
+                print(itemKey)
 
         # And finally the cleartext pwds
         if len(self.__clearTextPwds) > 0:
@@ -2049,7 +2049,7 @@ class NTDSHashes:
                 logging.info('ClearText passwords grabbed')
 
             for itemKey in self.__clearTextPwds.keys():
-                print itemKey
+                print(itemKey)
 
         # Closing output file
         if self.__outputFileName is not None:
@@ -2062,7 +2062,7 @@ class NTDSHashes:
     def __writeOutput(cls, fd, data):
         try:
             fd.write(data)
-        except Exception, e:
+        except Exception as e:
             logging.error("Error writing entry, skippingi (%s)" % str(e))
             pass
 
@@ -2132,7 +2132,7 @@ class DumpSecrets:
 
         tmpKey = unhexlify(tmpKey)
 
-        for i in xrange(len(tmpKey)):
+        for i in range(len(tmpKey)):
             bootKey += tmpKey[transforms[i]]
 
         logging.info('Target system bootKey: 0x%s' % hexlify(bootKey))
@@ -2179,7 +2179,7 @@ class DumpSecrets:
                         bootKey             = self.__remoteOps.getBootKey()
                         # Let's check whether target system stores LM Hashes
                         self.__noLMHash = self.__remoteOps.checkNoLMHashPolicy()
-                except Exception, e:
+                except Exception as e:
                     self.__canProcessSAMLSA = False
                     logging.error('RemoteOperations failed: %s' % str(e))
 
@@ -2195,7 +2195,7 @@ class DumpSecrets:
                     self.__SAMHashes.dump()
                     if self.__outputFileName is not None:
                         self.__SAMHashes.export(self.__outputFileName)
-                except Exception, e:
+                except Exception as e:
                     logging.error('SAM hashes extraction failed: %s' % str(e))
 
                 try:
@@ -2211,7 +2211,7 @@ class DumpSecrets:
                     self.__LSASecrets.dumpSecrets()
                     if self.__outputFileName is not None:
                         self.__LSASecrets.exportSecrets(self.__outputFileName)
-                except Exception, e:
+                except Exception as e:
                     logging.error('LSA hashes extraction failed: %s' % str(e))
 
             # NTDS Extraction we can try regardless of RemoteOperations failing. It might still work
@@ -2230,32 +2230,15 @@ class DumpSecrets:
                                            outputFileName=self.__outputFileName, justUser=self.__justUser)
             try:
                 self.__NTDSHashes.dump()
-            except Exception, e:
+            except Exception as e:
                 logging.error(e)
                 if self.__useVSSMethod is False:
                     logging.info('Something wen\'t wrong with the DRSUAPI approach. Try again with -use-vss parameter')
             self.cleanup()
-        except (Exception, KeyboardInterrupt), e:
+        except (Exception, KeyboardInterrupt) as e:
             #import traceback
-            #print traceback.print_exc()
+            #print(traceback.print_exc())
             logging.error(e)
-            if self.__NTDSHashes is not None:
-                if isinstance(e, KeyboardInterrupt):
-                    while True:
-                        answer =  raw_input("Delete resume session file? [y/N] ")
-                        if answer.upper() == '':
-                            answer = 'N'
-                            break
-                        elif answer.upper() == 'Y':
-                            answer = 'Y'
-                            break
-                        elif answer.upper() == 'N':
-                            answer = 'N'
-                            break
-                    if answer == 'Y':
-                        resumeFile = self.__NTDSHashes.getResumeSessionFile()
-                        if resumeFile is not None:
-                            os.unlink(resumeFile)
             try:
                 self.cleanup()
             except:
@@ -2276,13 +2259,13 @@ class DumpSecrets:
 # Process command-line arguments.
 if __name__ == '__main__':
     # Init the example's logger theme
-    logger.init()
+    # logger.init()
     # Explicitly changing the stdout encoding format
     if sys.stdout.encoding is None:
         # Output is redirected to a file
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
-    print version.BANNER
+    print(version.BANNER)
 
     parser = argparse.ArgumentParser(add_help = True, description = "Performs various techniques to dump secrets from the remote machine without executing any agent there.")
 
@@ -2321,16 +2304,16 @@ if __name__ == '__main__':
 
     options = parser.parse_args()
 
-    if options.debug is True:
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
+    # if options.debug is True:
+    #     logging.getLogger().setLevel(logging.DEBUG)
+    # else:
+    #     logging.getLogger().setLevel(logging.INFO)
 
     import re
 
     domain, username, password, address = re.compile('(?:(?:([^/@:]*)/)?([^@:]*)(?::([^@]*))?@)?(.*)').match(
         options.target).groups('')
-        
+
     #In case the password contains '@'
     if '@' in address:
         password = password + '@' + address.rpartition('@')[0]
@@ -2378,5 +2361,6 @@ if __name__ == '__main__':
     dumper = DumpSecrets(address, username, password, domain, options)
     try:
         dumper.dump()
-    except Exception, e:
+    except Exception as e:
         logging.error(e)
+
