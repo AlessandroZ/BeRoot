@@ -2,15 +2,15 @@
 
 BeRoot is a post exploitation tool to check common misconfigurations on Linux and Mac OS to find a way to escalate our privilege. 
 
-To understand privilege escalation on these systems, you should understand at least two main notions: LOLBins (this name has been given for Windows binaries but it should be correct to use it for Linux as well) and Wildcards. \
+To understand privilege escalation on these systems, you should understand at least two main notions: GTFOBins and Wildcards. \
 This Readme explains all technics implemented by BeRoot to better understand how to exploit it. 
 
-LOLBins
+GTFOBins
 ----
 
-[LOLBins](https://www.urbandictionary.com/define.php?term=LOLBin) could be used to gain root privilege on a system. These binaries allow a user to execute arbitrary code on the host, so imagine you could have access to one of them with sudo privilege (suid binary or if it's allowed on the sudoers file), you should be able to execute system command as root. 
+[GTFOBins](https://gtfobins.github.io/#) could be used to gain root privilege on a system. These binaries allow a user to execute arbitrary code on the host, so imagine you could have access to one of them with sudo privilege (suid binary or if it's allowed on the sudoers file), you should be able to execute system command as root. Take a look of the [GTFOBins](https://gtfobins.github.io/#) project to have a list more complete.  
 
-Here is a list of well-known binaries: 
+Here is a list of some well-known binaries: 
 
 * awk
 ```
@@ -34,7 +34,7 @@ man: 	!bash or $ sudo man -P whoami man
 more: 	!bash
 ```
 
-* file modifications (cannot be consider as LOLbins but useful for privilege escalation)
+* file modifications (cannot be consider as GTFOBins but useful for privilege escalation)
 ```
 cp:	sudo cp -f your_file /etc/sudoers
 mv:	sudo mv -f your_file /etc/sudoers
@@ -125,7 +125,7 @@ Wildcards
 If you have never heard about Unix wildcards, I suggest you read this very well explained [article](https://www.defensecode.com/public/DefenseCode_Unix_WildCards_Gone_Wild.txt).
 Using wildcards could lead into code execution if this one is not well called. 
 
-For our example, we want to get a shell ("sh") using the __tar__ command to execute code on the server. As explained on the LOLBin section, we could get it doing: 
+For our example, we want to get a shell ("sh") using the __tar__ command to execute code on the server. As explained on the GTFOBins section, we could get it doing: 
 ```
 tar cf archive.tar * --checkpoint=1 --checkpoint-action=exec=sh
 ```
@@ -201,7 +201,7 @@ SUID (Set owner User ID up on execution) is a special type of file permissions g
 
 BeRoot prints all suid files because a manually analyse should be done on each binary. However, it realizes some actions: 
 * checks if we have write permissions on these binary (why not ? :))
-* checks if a LOLBin is used as suid to be able to execute system commands using it (remember you could have suid LOLBin without beeing able to exectute commands - checks LOLBin section with the false positive example using __mount__). 
+* checks if a GTFOBins is used as suid to be able to execute system commands using it (remember you could have suid GTFOBins without beeing able to exectute commands - checks GTFOBins section with the false positive example using __mount__). 
 
 To analyse manually, checking for .so files loaded from a writable path should be a great idea (this check has not been implemented on BeRoot): 
 ```
@@ -283,8 +283,8 @@ admin,user,root ALL = (ALL) NOPASSWD: /sbin/service, /usr/sbin/iptables, python 
 So BeRoot will analyse all rules: 
 * if it affects our user or our user's group: 
 	* check if we have write permissions on all possible commands (in our example, it will test "service", "iptables", "python" and "/tmp/files.py")
-	* check for LOLBins
-	* check for LOLBins + wildcards 
+	* check for GTFOBins
+	* check for GTFOBins + wildcards 
 	* check if we can impersonate another user ("su" command)
 		* check write permissions on sensitive files and suid bin for this user
 		* realize again all these checks on the sudoers file using this new user
