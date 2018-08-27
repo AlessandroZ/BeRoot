@@ -5,15 +5,16 @@ import yaml # install pyyaml if needed
 
 """
 Get a dictionary from yaml files
+- cd /tmp/
 - git clone https://github.com/GTFOBins/GTFOBins.github.io/
-- parse.py should be at the root directory of GTFOBins
+- ./parse_yaml.py
 
 This script should help me to update easily my binary list here: 
 - https://github.com/AlessandroZ/BeRoot/blob/master/Linux/beroot/analyse/binaries.py
 """
 
 results = {}
-root = '_gtfobins'
+root = '/tmp/GTFOBins.github.io/_gtfobins'
 for file in os.listdir(root):
     if file.endswith('.md'):
         with open(os.path.join(root, file), 'r') as stream:
