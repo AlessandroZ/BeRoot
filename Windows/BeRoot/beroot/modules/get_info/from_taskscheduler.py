@@ -1,148 +1,149 @@
 # -*- coding: utf-8 -*-
-# Check Services
-from beroot.modules.checks.path_manipulation_checks import get_path_info
-from beroot.modules.objects.taskscheduler import Taskscheduler
-from beroot.modules.get_info.system_info import System
-from beroot.modules.objects.path import Path
-import xml.etree.cElementTree as ET
-# import pythoncom
-import platform
 import ctypes
 import os
+import platform
+# import pythoncom
 
-class GetTaskschedulers():
-	def __init__(self):
-		self.task_directory = os.path.join(os.environ.get('systemroot'), 'system32\Tasks')
-		s = System()
+from xml.etree.cElementTree import ElementTree
 
-		self.disable_redirection = False
-		if s.isx64:
-			self.disable_redirection = True
+from .system_info import System
+from ..checks.path_manipulation_checks import get_path_info
+from ..objects.taskscheduler import Taskscheduler
 
-	def tasksList(self):
-		tasks_list = []
 
-		# manage tasks for windows XP
-		if platform.release() == 'XP' or platform.release() == '2003':
-			pass
-			# try:
-			# 	from win32com.taskscheduler import taskscheduler
+class GetTaskschedulers(object):
+    def __init__(self):
+        self.task_directory = os.path.join(os.environ.get('systemroot'), 'system32\Tasks')
+        s = System()
 
-			# 	ts = pythoncom.CoCreateInstance(
-			# 										taskscheduler.CLSID_CTaskScheduler,
-			# 										None,
-			# 										pythoncom.CLSCTX_INPROC_SERVER,
-			# 										taskscheduler.IID_ITaskScheduler
-			# 									)
-			# except:
-			# 	return False
+        self.disable_redirection = False
+        if s.isx64:
+            self.disable_redirection = True
 
-			# Loop through all scheduled task
-			# tasks = ts.Enum()
-			# for job in tasks:
-			# 	task = ts.Activate(job)
+    def tasks_list(self):
+        tasks = []
 
-			# 	t = Taskscheduler()
-			# 	t.name = job
+        # manage tasks for windows XP
+        if platform.release() == 'XP' or platform.release() == '2003':
+            pass
+        # try:
+        # 	from win32com.taskscheduler import taskscheduler
 
-				# check if the tasks file has write access
-				# taskpath = '%s%s%s%s%s' % (os.environ['systemroot'], os.sep, 'Tasks', os.sep, job)
-				# TO DO
-				# if os.path.exists(taskpath):
-				# 	if checkPermissions(taskpath):
-				# 		results = results + '<strong><font color=ff0000>Write access on: ' + taskpath + '</font></strong><br/>\n'
+        # 	ts = pythoncom.CoCreateInstance(
+        # 										taskscheduler.CLSID_CTaskScheduler,
+        # 										None,
+        # 										pythoncom.CLSCTX_INPROC_SERVER,
+        # 										taskscheduler.IID_ITaskScheduler
+        # 									)
+        # except:
+        # 	return False
 
-				# run as
-				# try:
-				# 	t.runas = task.GetCreator()
-				# except:
-				# 	pass
+        # Loop through all scheduled task
+        # tasks = ts.Enum()
+        # for job in tasks:
+        # 	task = ts.Activate(job)
 
-				# path of the exe file
-				# try:
-					# task.GetApplicationName()
-				# except:
-					# pass
+        # 	t = Taskscheduler()
+        # 	t.name = job
 
-				# check the permission of the executable
-				# try:
-				# 	test = checkPermissions(task.GetApplicationName())
-				# except:
-				# 	pass
+        # check if the tasks file has write access
+        # taskpath = '%s%s%s%s%s' % (os.environ['systemroot'], os.sep, 'Tasks', os.sep, job)
+        # TO DO
+        # if os.path.exists(taskpath):
+        # 	if checkPermissions(taskpath):
+        # 		results = results + '<strong><font color=ff0000>Write access on: ' + taskpath + '</font></strong><br/>\n'
 
-		# manage task for windows 7
-		else:
-			if self.disable_redirection:
-				wow64 = ctypes.c_long(0)
-				ctypes.windll.kernel32.Wow64DisableWow64FsRedirection(ctypes.byref(wow64))
+        # run as
+        # try:
+        # 	t.runas = task.GetCreator()
+        # except:
+        # 	pass
 
-			if os.path.exists(self.task_directory):
-				for root, dirs, files in os.walk(self.task_directory):
-					for f in files:
+        # path of the exe file
+        # try:
+        # task.GetApplicationName()
+        # except:
+        # pass
 
-						xml_file = os.path.join(root, f)
-						try:
-							tree = ET.ElementTree(file=xml_file)
-						except:
-							continue
+        # check the permission of the executable
+        # try:
+        # 	test = checkPermissions(task.GetApplicationName())
+        # except:
+        # 	pass
 
-						command = ''
-						arguments = ''
-						userid = ''
-						groupid = ''
-						runlevel = ''
+        # manage task for windows 7
+        else:
+            if self.disable_redirection:
+                wow64 = ctypes.c_long(0)
+                ctypes.windll.kernel32.Wow64DisableWow64FsRedirection(ctypes.byref(wow64))
 
-						xmlroot = tree.getroot()
-						for xml in xmlroot:
-							# get task information (date, author)
-							# in RegistrationInfo tag
+            if os.path.exists(self.task_directory):
+                for root, dirs, files in os.walk(self.task_directory):
+                    for f in files:
 
-							# get triggers information (launch at boot, etc.)
-							# in Triggers tag
+                        xml_file = os.path.join(root, f)
+                        try:
+                            tree = ElementTree(file=xml_file)
+                        except Exception:
+                            continue
 
-							# get user information
-							if 'principals' in xml.tag.lower():
-								for child in xml.getchildren():
-									if 'principal' in child.tag.lower():
-										for principal in child.getchildren():
-											if 'userid' in principal.tag.lower():
-												userid = principal.text
-											elif 'groupid' in principal.tag.lower():
-												groupid = principal.text
-											elif 'runlevel' in principal.tag.lower():
-												runlevel = principal.text
+                        command = ''
+                        arguments = ''
+                        userid = ''
+                        groupid = ''
+                        runlevel = ''
 
-							# get all execution information (executable and arguments)
-							if 'actions' in xml.tag.lower():
-								for child in xml.getchildren():
-									if 'exec' in child.tag.lower():
-										for execution in child.getchildren():
-											if 'command' in execution.tag.lower():
-												command = os.path.expandvars(execution.text)
-											elif  'arguments' in execution.tag.lower():
-												arguments = os.path.expandvars(execution.text)
+                        xmlroot = tree.getroot()
+                        for xml in xmlroot:
+                            # get task information (date, author)
+                            # in RegistrationInfo tag
 
-						full_path = '%s %s' % (str(command), str(arguments))
-						full_path = full_path.strip()
+                            # get triggers information (launch at boot, etc.)
+                            # in Triggers tag
 
-						if full_path: #and runlevel != 'LeastPrivilege':
-							t = Taskscheduler()
-							t.name = f
-							t.full_path = full_path
-							t.paths = get_path_info(t.full_path)
+                            # get user information
+                            if 'principals' in xml.tag.lower():
+                                for child in xml.getchildren():
+                                    if 'principal' in child.tag.lower():
+                                        for principal in child.getchildren():
+                                            if 'userid' in principal.tag.lower():
+                                                userid = principal.text
+                                            elif 'groupid' in principal.tag.lower():
+                                                groupid = principal.text
+                                            elif 'runlevel' in principal.tag.lower():
+                                                runlevel = principal.text
 
-							if userid == 'S-1-5-18':
-								t.userid = 'LocalSystem'
-							else:
-								t.userid = userid
+                            # get all execution information (executable and arguments)
+                            if 'actions' in xml.tag.lower():
+                                for child in xml.getchildren():
+                                    if 'exec' in child.tag.lower():
+                                        for execution in child.getchildren():
+                                            if 'command' in execution.tag.lower():
+                                                command = os.path.expandvars(execution.text)
+                                            elif 'arguments' in execution.tag.lower():
+                                                arguments = os.path.expandvars(execution.text)
 
-							t.groupid = groupid
-							t.runlevel = runlevel
+                        full_path = '%s %s' % (str(command), str(arguments))
+                        full_path = full_path.strip()
 
-							# append the tasks to the main tasklist
-							tasks_list.append(t)
+                        if full_path:  # and runlevel != 'LeastPrivilege':
+                            t = Taskscheduler()
+                            t.name = f
+                            t.full_path = full_path
+                            t.paths = get_path_info(t.full_path)
 
-			if self.disable_redirection:
-				ctypes.windll.kernel32.Wow64EnableWow64FsRedirection(wow64)
+                            if userid == 'S-1-5-18':
+                                t.userid = 'LocalSystem'
+                            else:
+                                t.userid = userid
 
-		return tasks_list
+                            t.groupid = groupid
+                            t.runlevel = runlevel
+
+                            # append the tasks to the main tasklist
+                            tasks.append(t)
+
+            if self.disable_redirection:
+                ctypes.windll.kernel32.Wow64EnableWow64FsRedirection(wow64)
+
+        return tasks

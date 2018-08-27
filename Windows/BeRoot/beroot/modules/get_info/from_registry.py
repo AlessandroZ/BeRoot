@@ -1,130 +1,140 @@
 # -*- coding: utf-8 -*-
-from beroot.modules.checks.path_manipulation_checks import get_path_info
-from beroot.modules.objects.service import Service
-from beroot.modules.objects.registry import Registry_key
-from beroot.modules.objects.winstructures import *
-import _winreg
 import os
 
-class Registry():
+try:
+    import _winreg as winreg
+except ImportError:
+    import winreg
 
-	# --------------------------------------- StartUp Key functions ---------------------------------------
+from ..checks.path_manipulation_checks import get_path_info
+from ..objects.service import Service
+from ..objects.registry import RegistryKey
+from ..objects.winstructures import KEY_READ, KEY_WRITE, KEY_ENUMERATE_SUB_KEYS, KEY_QUERY_VALUE, HKEY_LOCAL_MACHINE, OpenKey
 
-	def definePath(self):
-		runkeys_hklm = [
-			r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
-			r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
-			r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunService",
-			r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnceService",
-			r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run",
-			r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
-			r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunService",
-			r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnceService"
-		]
-		return runkeys_hklm
 
-	# read all startup key
-	def get_sensitive_registry_key(self):
-		keys = []
-		runkeys_hklm = self.definePath()
+class Registry(object):
 
-		# access either in read only mode, or in write mode
-		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
-		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
+    # --------------------------------------- StartUp Key functions ---------------------------------------
 
-		# Loop through all keys to check
-		for keyPath in runkeys_hklm:
-			is_key_writable = False
+    def define_path(self):
+        runkeys_hklm = [
+            r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+            r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+            r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunService",
+            r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnceService",
+            r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run",
+            r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+            r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunService",
+            r"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnceService"
+        ]
+        return runkeys_hklm
 
-			# check if the registry key has writable access
-			try:
-				hkey = OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessWrite)
-				is_key_writable = keyPath
-			except:
-				try:
-					hkey = OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, accessRead)
-				except:
-					continue
+    def get_sensitive_registry_key(self):
+        """
+        Read all startup key
+        """
+        keys = []
+        runkeys_hklm = self.define_path()
 
-			# retrieve all value of the registry key
-			try:
-				num = _winreg.QueryInfoKey(hkey)[1]
+        # Access either in read only mode, or in write mode
+        access_read = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
+        access_write = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 
-				# loop through number of value in the key
-				for x in range(0, num):
-					k = _winreg.EnumValue(hkey, x)
+        # Loop through all keys to check
+        for keyPath in runkeys_hklm:
+            is_key_writable = False
 
-					stk = Registry_key()
-					if is_key_writable:
-						stk.is_key_writable = is_key_writable
+            # Check if the registry key has writable access
+            try:
+                hkey = OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, access_write)
+                is_key_writable = keyPath
+            except Exception:
+                try:
+                    hkey = OpenKey(HKEY_LOCAL_MACHINE, keyPath, 0, access_read)
+                except Exception:
+                    continue
 
-					stk.key = keyPath
-					stk.name = k[0]
-					stk.full_path = k[1]
-					stk.paths = get_path_info(k[1])
+            # Retrieve all value of the registry key
+            try:
+                num = winreg.QueryInfoKey(hkey)[1]
 
-					keys.append(stk)
-				_winreg.CloseKey(hkey)
-			except:
-				pass
+                # Loop through number of value in the key
+                for x in range(0, num):
+                    k = winreg.EnumValue(hkey, x)
 
-		return keys
+                    stk = RegistryKey()
+                    if is_key_writable:
+                        stk.is_key_writable = is_key_writable
 
-	# --------------------------------------- Service Key functions ---------------------------------------
+                    stk.key = keyPath
+                    stk.name = k[0]
+                    stk.full_path = k[1]
+                    stk.paths = get_path_info(k[1])
 
-	# read all service information from registry
-	def get_services_from_registry(self):
-		service_keys = []
+                    keys.append(stk)
+                winreg.CloseKey(hkey)
+            except Exception:
+                pass
 
-		# Open the Base on read only
-		accessRead = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
-		accessWrite = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
+        return keys
 
-		hkey = OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services', 0, accessRead)
-		num = _winreg.QueryInfoKey(hkey)[0]
+    # --------------------------------------- Service Key functions ---------------------------------------
 
-		# loop through all subkeys
-		for x in range(0, num):
-			sk = Service()
+    def get_services_from_registry(self):
+        """
+        Read all service information from registry
+        """
+        service_keys = []
 
-			# Name of the service
-			svc = _winreg.EnumKey(hkey, x)
-			sk.name = svc
+        # Open the Base on read only
+        access_read = KEY_READ | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
+        access_write = KEY_WRITE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE
 
-			# ------ Check Write access of the key ------
-			try:
-					sk.key = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
-					skey = OpenKey(hkey, svc, 0, accessWrite)
-					sk.is_key_writable = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
-			except:
-				skey = OpenKey(hkey, svc, 0, accessRead)
-				pass
+        hkey = OpenKey(HKEY_LOCAL_MACHINE, 'SYSTEM\\CurrentControlSet\\Services', 0, access_read)
+        num = winreg.QueryInfoKey(hkey)[0]
 
-			# ------ Check if the key has the Parameters\Application value presents ------
-			try:
-				# find display name
-				display_name = str(_winreg.QueryValueEx(skey, 'DisplayName')[0])
-				if display_name:
-					sk.display_name = display_name
-			except:
-				# in case there is no key called DisplayName
-				pass
+        # Loop through all subkeys
+        for x in range(0, num):
+            sk = Service()
 
-			# ------ Check if the key has his executable with write access and the folder containing it as well ------
-			try:
-				skey = OpenKey(hkey, svc, 0, accessRead)
+            # Name of the service
+            svc = winreg.EnumKey(hkey, x)
+            sk.name = svc
 
-				# find ImagePath name
-				image_path = str(_winreg.QueryValueEx(skey, 'ImagePath')[0])
+            # ------ Check Write access of the key ------
+            try:
+                sk.key = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
+                skey = OpenKey(hkey, svc, 0, access_write)
+                sk.is_key_writable = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s" % svc
+            except Exception:
+                skey = OpenKey(hkey, svc, 0, access_read)
+                pass
 
-				if image_path:
-					image_path = os.path.expandvars(image_path)
+            # ------ Check if the key has the Parameters\Application value presents ------
+            try:
+                # Find display name
+                display_name = str(winreg.QueryValueEx(skey, 'DisplayName')[0])
+                if display_name:
+                    sk.display_name = display_name
+            except Exception:
+                # In case there is no key called DisplayName
+                pass
 
-					if 'drivers' not in image_path.lower():
-						sk.full_path = image_path
-						sk.paths = get_path_info(image_path)
-			except:
-				pass
+            # ------ Check if the key has his executable with write access and the folder containing it as well ------
+            try:
+                skey = OpenKey(hkey, svc, 0, access_read)
 
-			service_keys.append(sk)
-		return service_keys
+                # Find ImagePath name
+                image_path = str(winreg.QueryValueEx(skey, 'ImagePath')[0])
+
+                if image_path:
+                    image_path = os.path.expandvars(image_path)
+
+                    if 'drivers' not in image_path.lower():
+                        sk.full_path = image_path
+                        sk.paths = get_path_info(image_path)
+            except Exception:
+                pass
+
+            service_keys.append(sk)
+        return service_keys
