@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-import win32service # should be removed => TO DO!
+from ctypes.wintypes import *
 import ctypes
 
 from ..checks.path_manipulation_checks import get_path_info
 from ..objects.service import Service
 from ..objects.winstructures import SERVICE_START, SERVICE_STOP, SERVICE_CHANGE_CONFIG, SERVICE_QUERY_CONFIG, \
     SERVICE_WIN32, SERVICE_DRIVER, SERVICE_STATE_ALL, \
-    SC_MANAGER_CONNECT, SC_MANAGER_ENUMERATE_SERVICE, QUERY_SERVICE_CONFIG, ENUM_SERVICE_STATUS, \
-    OpenService, OpenSCManager, QueryServiceConfig, EnumServicesStatus
+    SC_MANAGER_CONNECT, SC_MANAGER_ENUMERATE_SERVICE, QUERY_SERVICE_CONFIG, ENUM_SERVICE_STATUSA, \
+    OpenService, CloseServiceHandle, OpenSCManager, QueryServiceConfig, EnumServicesStatus, \
+    ERROR_INSUFFICIENT_BUFFER, LPQUERY_SERVICE_CONFIG
 
 
 class GetServices(object):
@@ -17,60 +18,38 @@ class GetServices(object):
         Generate the list of services
         """
         scm = OpenSCManager(None, None, SC_MANAGER_ENUMERATE_SERVICE)
-        svcs = win32service.EnumServicesStatus(scm)
 
-        # bytes_needed = ctypes.c_size_t(0)
-        # serv_returned = ctypes.c_size_t(0)
-        # res_handle = ctypes.c_size_t(0)
-        # pServices = ctypes.POINTER(ENUM_SERVICE_STATUS)
-        # dw_bytes = ctypes.sizeof(ENUM_SERVICE_STATUS)
-        #
-        # ret = EnumServicesStatus(
-        #     scm,
-        #     SERVICE_WIN32 | SERVICE_DRIVER, SERVICE_STATE_ALL,
-        #     pServices,
-        #     dw_bytes,
-        #     ctypes.byref(bytes_needed),
-        #     ctypes.byref(serv_returned),
-        #     ctypes.byref(res_handle)
-        # )
-        # if not ret:
-        #     return False
+        for i in EnumServicesStatus(scm): 
+            hservice = OpenService(scm, i.ServiceName, SERVICE_QUERY_CONFIG)
+            bytes_needed = DWORD()
+            
+            QueryServiceConfig(hservice, 0, 0, ctypes.byref(bytes_needed))
+            while ctypes.GetLastError() == ERROR_INSUFFICIENT_BUFFER:
+                if bytes_needed.value < ctypes.sizeof(QUERY_SERVICE_CONFIG): 
+                    break 
+                ServicesBuffer = ctypes.create_string_buffer("", bytes_needed.value)
+                success = QueryServiceConfig(hservice, ctypes.byref(ServicesBuffer), bytes_needed, ctypes.byref(bytes_needed))
+                lpServicesArray = ctypes.cast(ctypes.cast(ctypes.pointer(ServicesBuffer), ctypes.c_void_p), LPQUERY_SERVICE_CONFIG) 
+                print lpServicesArray.contents.lpBinaryPathName
+                if success: break
 
-        for svc in svcs:
-            try:
-                short_name = svc[0]
+            CloseServiceHandle(hservice)
 
-                hservice = OpenService(scm, svc[0], SERVICE_QUERY_CONFIG)
-                if not hservice:
-                    continue
+            short_name = i.ServiceName
+            full_path = lpServicesArray.contents.lpBinaryPathName
 
-                # sc = QUERY_SERVICE_CONFIG()
-                # bytes_needed = ctypes.c_size_t(0)
-                # ret = QueryServiceConfig(hservice, ctypes.byref(sc), ctypes.sizeof(sc), ctypes.byref(bytes_needed))
-                # if not ret:
-                #     continue
-                #
-                # full_path = sc.lpBinaryPathName
+            sv = self.check_if_service_already_loaded(short_name, full_path, services_loaded)
+            if sv:
+                sv.permissions = self.get_service_permissions(sv)
 
-                sh_query_config = OpenService(scm, svc[0], SERVICE_QUERY_CONFIG)
-                service_info = win32service.QueryServiceConfig(sh_query_config)
-                full_path = service_info[3]
-
-                sv = self.check_if_service_already_loaded(short_name, full_path, services_loaded)
-                if sv:
-                    sv.permissions = self.get_service_permissions(sv)
-
-                if not sv:
-                    sk = Service()
-                    sk.name = short_name
-                    sk.display_name = svc[1]
-                    sk.full_path = full_path
-                    sk.paths = get_path_info(full_path)
-                    sk.permissions = self.get_service_permissions(sv)
-                    services_loaded.append(sk)
-            except Exception:
-                pass
+            if not sv:
+                sk = Service()
+                sk.name = short_name
+                sk.display_name = i.DisplayName
+                sk.full_path = full_path
+                sk.paths = get_path_info(full_path)
+                sk.permissions = self.get_service_permissions(sv)
+                services_loaded.append(sk)
 
         return services_loaded
 

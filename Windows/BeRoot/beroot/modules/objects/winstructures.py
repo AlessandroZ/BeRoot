@@ -51,6 +51,9 @@ SERVICE_ACTIVE = 1
 SERVICE_INACTIVE = 2
 SERVICE_STATE_ALL = 3
 
+ERROR_INSUFFICIENT_BUFFER = 122
+ERROR_MORE_DATA = 234
+
 
 class SERVICE_STATUS(Structure):
     _fields_ = [
@@ -77,16 +80,35 @@ class QUERY_SERVICE_CONFIG(Structure):
         ('lpServiceStartName', LPSTR),
         ('lpDisplayName', LPSTR),
     ]
-PQUERY_SERVICE_CONFIG = POINTER(QUERY_SERVICE_CONFIG)
+LPQUERY_SERVICE_CONFIG = POINTER(QUERY_SERVICE_CONFIG)
 
 
-class ENUM_SERVICE_STATUS(Structure):
+class ENUM_SERVICE_STATUSA(Structure):
     _fields_ = [
         ('lpServiceName', LPSTR),
         ('lpDisplayName', LPSTR),
         ('ServiceStatus', SERVICE_STATUS),
     ]
-PENUM_SERVICE_STATUS = POINTER(ENUM_SERVICE_STATUS)
+LPENUM_SERVICE_STATUSA = POINTER(ENUM_SERVICE_STATUSA)
+
+class ServiceStatusEntry(object): 
+    """ 
+    Service status entry returned by L{EnumServicesStatus}. 
+    """ 
+    def __init__(self, raw): 
+        """ 
+        @type  raw: L{ENUM_SERVICE_STATUSA} or L{ENUM_SERVICE_STATUSW} 
+        @param raw: Raw structure for this service status entry. 
+        """ 
+        self.ServiceName             = raw.lpServiceName 
+        self.DisplayName             = raw.lpDisplayName 
+        self.ServiceType             = raw.ServiceStatus.dwServiceType 
+        self.CurrentState            = raw.ServiceStatus.dwCurrentState 
+        self.ControlsAccepted        = raw.ServiceStatus.dwControlsAccepted 
+        self.Win32ExitCode           = raw.ServiceStatus.dwWin32ExitCode 
+        self.ServiceSpecificExitCode = raw.ServiceStatus.dwServiceSpecificExitCode 
+        self.CheckPoint              = raw.ServiceStatus.dwCheckPoint 
+        self.WaitHint                = raw.ServiceStatus.dwWaitHint 
 
 
 advapi32 = windll.advapi32
@@ -120,12 +142,8 @@ QueryServiceStatus.argtypes = [HANDLE, PSERVICE_STATUS]
 QueryServiceStatus.restype = BOOL
 
 QueryServiceConfig = advapi32.QueryServiceConfigA
-QueryServiceConfig.argtypes = [HANDLE, PQUERY_SERVICE_CONFIG, DWORD, LPDWORD]
+QueryServiceConfig.argtypes = [HANDLE, LPVOID, DWORD, LPDWORD]
 QueryServiceConfig.restype = BOOL
-
-EnumServicesStatus = advapi32.EnumServicesStatusA
-EnumServicesStatus.argtypes = [HANDLE, DWORD, DWORD, PENUM_SERVICE_STATUS, DWORD, LPDWORD, LPDWORD, LPDWORD]
-EnumServicesStatus.restype = BOOL
 
 s = System()
 
@@ -135,3 +153,33 @@ def OpenKey(key, path, index, access):
         return winreg.OpenKey(key, path, index, access | winreg.KEY_WOW64_64KEY)
     else:
         return winreg.OpenKey(key, path, index, access)
+
+
+def EnumServicesStatus(hSCManager, dwServiceType=SERVICE_DRIVER | SERVICE_WIN32, dwServiceState=SERVICE_STATE_ALL): 
+        _EnumServicesStatusA = advapi32.EnumServicesStatusA 
+        _EnumServicesStatusA.argtypes = [SC_HANDLE, DWORD, DWORD, LPVOID, DWORD, LPDWORD, LPDWORD, LPDWORD] 
+        _EnumServicesStatusA.restype  = bool 
+
+        cbBytesNeeded    = DWORD(0) 
+        ServicesReturned = DWORD(0) 
+        ResumeHandle     = DWORD(0) 
+
+        _EnumServicesStatusA(hSCManager, dwServiceType, dwServiceState, None, 0, byref(cbBytesNeeded), byref(ServicesReturned), byref(ResumeHandle)) 
+
+        Services = [] 
+        success = False 
+        while GetLastError() == ERROR_MORE_DATA: 
+                if cbBytesNeeded.value < sizeof(ENUM_SERVICE_STATUSA): 
+                        break 
+                ServicesBuffer = create_string_buffer("", cbBytesNeeded.value) 
+                success = _EnumServicesStatusA(hSCManager, dwServiceType, dwServiceState, byref(ServicesBuffer), sizeof(ServicesBuffer), byref(cbBytesNeeded), byref(ServicesReturned), byref(ResumeHandle)) 
+                if sizeof(ServicesBuffer) < (sizeof(ENUM_SERVICE_STATUSA) * ServicesReturned.value): 
+                        raise WinError() 
+                lpServicesArray = cast(cast(pointer(ServicesBuffer), c_void_p), LPENUM_SERVICE_STATUSA) 
+                for index in xrange(0, ServicesReturned.value): 
+                        Services.append(ServiceStatusEntry(lpServicesArray[index])) 
+                if success: break 
+        if not success: 
+                raise WinError() 
+
+        return Services 

@@ -119,9 +119,11 @@ class GetTaskschedulers(object):
                                     if 'exec' in child.tag.lower():
                                         for execution in child.getchildren():
                                             if 'command' in execution.tag.lower():
-                                                command = os.path.expandvars(execution.text)
+                                                if execution.text:
+                                                    command = os.path.expandvars(execution.text)
                                             elif 'arguments' in execution.tag.lower():
-                                                arguments = os.path.expandvars(execution.text)
+                                                if execution.text:
+                                                    arguments = os.path.expandvars(execution.text)
 
                         full_path = '%s %s' % (str(command), str(arguments))
                         full_path = full_path.strip()
