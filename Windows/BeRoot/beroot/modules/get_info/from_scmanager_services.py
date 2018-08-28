@@ -5,8 +5,7 @@ import ctypes
 from ..checks.path_manipulation_checks import get_path_info
 from ..objects.service import Service
 from ..objects.winstructures import SERVICE_START, SERVICE_STOP, SERVICE_CHANGE_CONFIG, SERVICE_QUERY_CONFIG, \
-    SERVICE_WIN32, SERVICE_DRIVER, SERVICE_STATE_ALL, \
-    SC_MANAGER_CONNECT, SC_MANAGER_ENUMERATE_SERVICE, QUERY_SERVICE_CONFIG, ENUM_SERVICE_STATUSA, \
+    SC_MANAGER_CONNECT, SC_MANAGER_ENUMERATE_SERVICE, QUERY_SERVICE_CONFIG, \
     OpenService, CloseServiceHandle, OpenSCManager, QueryServiceConfig, EnumServicesStatus, \
     ERROR_INSUFFICIENT_BUFFER, LPQUERY_SERVICE_CONFIG
 
@@ -27,10 +26,9 @@ class GetServices(object):
             while ctypes.GetLastError() == ERROR_INSUFFICIENT_BUFFER:
                 if bytes_needed.value < ctypes.sizeof(QUERY_SERVICE_CONFIG): 
                     break 
-                ServicesBuffer = ctypes.create_string_buffer("", bytes_needed.value)
-                success = QueryServiceConfig(hservice, ctypes.byref(ServicesBuffer), bytes_needed, ctypes.byref(bytes_needed))
-                lpServicesArray = ctypes.cast(ctypes.cast(ctypes.pointer(ServicesBuffer), ctypes.c_void_p), LPQUERY_SERVICE_CONFIG) 
-                print lpServicesArray.contents.lpBinaryPathName
+                services_buffer = ctypes.create_string_buffer("", bytes_needed.value)
+                success = QueryServiceConfig(hservice, ctypes.byref(services_buffer), bytes_needed, ctypes.byref(bytes_needed))
+                lpServicesArray = ctypes.cast(ctypes.cast(ctypes.pointer(services_buffer), ctypes.c_void_p), LPQUERY_SERVICE_CONFIG)
                 if success: break
 
             CloseServiceHandle(hservice)

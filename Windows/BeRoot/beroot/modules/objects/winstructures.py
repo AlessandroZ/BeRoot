@@ -161,22 +161,22 @@ def EnumServicesStatus(hSCManager, dwServiceType=SERVICE_DRIVER | SERVICE_WIN32,
         _EnumServicesStatusA.restype  = bool 
 
         cbBytesNeeded    = DWORD(0) 
-        ServicesReturned = DWORD(0) 
+        services_returned = DWORD(0) 
         ResumeHandle     = DWORD(0) 
 
-        _EnumServicesStatusA(hSCManager, dwServiceType, dwServiceState, None, 0, byref(cbBytesNeeded), byref(ServicesReturned), byref(ResumeHandle)) 
+        _EnumServicesStatusA(hSCManager, dwServiceType, dwServiceState, None, 0, byref(cbBytesNeeded), byref(services_returned), byref(ResumeHandle)) 
 
         Services = [] 
         success = False 
         while GetLastError() == ERROR_MORE_DATA: 
                 if cbBytesNeeded.value < sizeof(ENUM_SERVICE_STATUSA): 
                         break 
-                ServicesBuffer = create_string_buffer("", cbBytesNeeded.value) 
-                success = _EnumServicesStatusA(hSCManager, dwServiceType, dwServiceState, byref(ServicesBuffer), sizeof(ServicesBuffer), byref(cbBytesNeeded), byref(ServicesReturned), byref(ResumeHandle)) 
-                if sizeof(ServicesBuffer) < (sizeof(ENUM_SERVICE_STATUSA) * ServicesReturned.value): 
+                services_buffer = create_string_buffer("", cbBytesNeeded.value) 
+                success = _EnumServicesStatusA(hSCManager, dwServiceType, dwServiceState, byref(services_buffer), sizeof(services_buffer), byref(cbBytesNeeded), byref(services_returned), byref(ResumeHandle)) 
+                if sizeof(services_buffer) < (sizeof(ENUM_SERVICE_STATUSA) * services_returned.value): 
                         raise WinError() 
-                lpServicesArray = cast(cast(pointer(ServicesBuffer), c_void_p), LPENUM_SERVICE_STATUSA) 
-                for index in xrange(0, ServicesReturned.value): 
+                lpServicesArray = cast(cast(pointer(services_buffer), c_void_p), LPENUM_SERVICE_STATUSA) 
+                for index in range(0, services_returned.value):
                         Services.append(ServiceStatusEntry(lpServicesArray[index])) 
                 if success: break 
         if not success: 
