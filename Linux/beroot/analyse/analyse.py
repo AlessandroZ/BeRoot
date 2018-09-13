@@ -138,8 +138,8 @@ class Analyse:
         if ld_preload:
             self.print_log('ok', 'Environment for LD_PRELOAD set as default specification')
 
-        # Get associated group for the current user
-        current_groupname = self.users.groups.getgrgid(user.pw_gid).gr_name
+        # Get associated groups for the current user
+        user_groups = [g.gr_name for g in self.users.groups.getgrall() if user.pw_name in g.gr_mem]
 
         for sudoers in sudoers_info:
 
@@ -148,8 +148,15 @@ class Analyse:
             if 'NOPASSWD' in sudoers['directives']:
                 need_password = False
 
-            # If the sudoers line affects the current user or his group
-            if user.pw_name in sudoers['users'] or '%{group}'.format(group=current_groupname) in sudoers['users']:
+            # Check if the sudoers line affects the current user or his group
+            rule_ok = False
+            for user_or_group in sudoers['users']:
+                if user_or_group.startswith('%') and user_or_group[1:] in user_groups:
+                    rule_ok = True
+                elif user.pw_name == user_or_group:
+                    rule_ok = True
+
+            if rule_ok:
 
                 for cmd in sudoers['cmds']:
                     ok = False

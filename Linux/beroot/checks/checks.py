@@ -98,7 +98,7 @@ class Checks:
         else:
             result = SudoList().parse()
         
-        return 'sudo_rules', (result, False)
+        return 'sudo_rules', result
 
     def check_nfs_root_squashing(self):
         """

@@ -161,4 +161,4 @@ class SudoList:
             sudo_rules = self.parse_sudo_list(sudo_list)
             current_user = Users().current.pw_name
             self.impersonate_mechanism(current_user, sudo_rules, users_chain=[])
-        return self.all_rules
+        return self.all_rules, False
