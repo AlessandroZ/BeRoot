@@ -28,7 +28,7 @@ class Analyse:
     def __init__(self, checks, color=True):
         self.checks = checks
         self.interesting_bin = Binaries()
-        self.users = self.checks.get_users()
+        self.users = self.checks.users
         self.nothing_found = True
         self.sensitive_files = None
         self.suid_files = None
@@ -128,7 +128,7 @@ class Analyse:
                                 self.print_log('ok', 'Interesting bin: {bin}'.format(bin=name))
                                 self.print_log('info', 'Shell escape method: \n{cmd}\n'.format(cmd=shell_escape))
 
-    def anaylyse_sudoers(self, sudoers_info, ld_preload, user):
+    def anaylyse_sudo_rules(self, sudoers_info, ld_preload, user, user_chain=''):
         """
         sudoers_info is a didctonary containing all rules found on the sudoers file
         ld_preload variable is a boolean saying that LD_PRELOAD on the env_keep variable
@@ -144,7 +144,7 @@ class Analyse:
         for sudoers in sudoers_info:
 
             need_password = True
-            # NOPASSWD is present, no password will be required to execute the commands
+            # NOPASSWD present means that no password is required to execute the commands
             if 'NOPASSWD' in sudoers['directives']:
                 need_password = False
 
@@ -196,38 +196,44 @@ class Analyse:
                             args = cmd.line.strip()[cmd.line.strip().index(c.basename) + len(c.basename):].strip()
 
                             # Every users could impersonated or at least root
-                            if args.strip() == '*' or args.strip() == 'root':
+                            if args.strip() == 'root' or not args.strip():
                                 ok = True
                                 msg.append(('ok', 'Impersonation can be done on root user'))
 
                             else:
-                                u = self.get_user(user=args.strip())
-                                if u:
-                                    self.print_log('info', 'Impersonating user "{user}" using line: {line}'.format(
-                                        user=args.strip(), line=cmd.line.strip()))
+                                if args.strip() == '*':
+                                    users = [u for u in self.users.list if u.pw_uid != os.getuid()]
+                                else:
+                                    users = [self.get_user(user=args.strip())]
+                                
+                                if users:
+                                    for u in users:
+                                        self.print_log('info', 'Impersonating user "{user}" using line: {line}'.format(
+                                            user=u.pw_name, line=cmd.line.strip()))
 
-                                    # Check all sensitive files for write access using the impersonated user
-                                    self.anaylyse_files_permissions(self.sensitive_files, user=u, check_wildcards=False)
+                                        # Check all sensitive files for write access using the impersonated user
+                                        self.anaylyse_files_permissions(self.sensitive_files, user=u, check_wildcards=False)
 
-                                    # Check suid files for write access using the impersonated user
-                                    self.anaylyse_suids(self.suid_files, user=u, ckeck_only_write_access=True)
+                                        # Check suid files for write access using the impersonated user
+                                        self.anaylyse_suids(self.suid_files, user=u, ckeck_only_write_access=True)
 
-                                    # Realize same check on sudoers file using the impersonated user
-                                    self.anaylyse_sudoers(sudoers_info=sudoers_info, ld_preload=False, user=u)
+                                        # Realize same check on sudoers file using the impersonated user
+                                        self.anaylyse_sudo_rules(sudoers_info=sudoers_info, ld_preload=False, user=u, user_chain=user_chain + ' -> ' + u.pw_name)
 
                                 else:
                                     ok = True  # should be a false positive but I prefer to print it anyway
                                     msg.append(('error', 'User not found: {user}'.format(user=args.strip())))
 
                     if ok:
-                        self.print_log('info', 'Sudoers line: {line}'.format(line=cmd.line.strip()))
                         if need_password:
-                            self.print_log('error', 'Password required')
+                            self.print_log('error', 'Rule (Password required): {line}'.format(line=cmd.line.strip()))
                         else:
-                            self.print_log('ok', 'No password required (NOPASSWD used)')
+                            self.print_log('ok', 'Rule (NOPASSWD used): {line}'.format(line=cmd.line.strip()))
 
+                        self.print_log('info', 'From user {user}'.format(user=user_chain))
                         for m in msg:
                             self.print_log(m[0], m[1])
+                        self.print_log('', '')
 
     def anaylyse_suids(self, suids, user, ckeck_only_write_access=False):
 
@@ -237,7 +243,7 @@ class Analyse:
                 self.print_log('info', '{suid}'.format(suid=suid.file.path))
 
             if self.is_writable(suid.file, user):
-                self.print_log('ok', 'Writable suid file')
+                self.print_log('ok', 'Writable suid file: {suid_file}'.format(suid_file=suid.file.path))
 
             if not ckeck_only_write_access:
                 shell_escape = self.interesting_bin.find_binary(suid.file.basename)
@@ -265,8 +271,8 @@ class Analyse:
             self.sensitive_files = result  # Store data to do tests later
             self.anaylyse_files_permissions(result, user=self.users.current)  # users is a pwd objet
 
-        elif module == 'sudoers_file':
-            self.anaylyse_sudoers(sudoers_info=result[0], ld_preload=result[1], user=self.users.current)
+        elif module == 'sudo_rules':
+            self.anaylyse_sudo_rules(sudoers_info=result[0], ld_preload=result[1], user=self.users.current, user_chain=self.users.current.pw_name)
 
         elif module == 'suid_bin':
             self.suid_files = result

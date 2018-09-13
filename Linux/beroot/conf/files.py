@@ -56,7 +56,7 @@ class FileManager:
         self.file = File(path)
         self.subfiles = []  # Tab of PathInFile object
         self.path_pattern = re.compile(r"^[\'\"]?(?:/[^/]+)*[\'\"]?$")
-        self.sudoers_pattern = re.compile(r"(\((?P<runas>\w+)\)* )*(((\w+): *)*)(?P<cmds>.*)")
+        self.sudoers_pattern = re.compile(r"(\( ?(?P<runas>.*) ?\)) ?(?P<directives>(\w+: ?)*)(?P<cmds>.*)")
         self.sudoers_info = None
 
         if self.file.is_readable and check_inside:
@@ -89,6 +89,7 @@ class FileManager:
                         paths.append(
                             File(filepath, alias=path)
                         )
+                        break
         return paths
 
     def parse_file(self, path):
@@ -198,13 +199,13 @@ class FileManager:
                     # cmds could be a list of many cmds with many path (split all cmd and check if writable path inside)
                     commands = [PathInFile(line=cmd.strip(), paths=self.extract_paths_from_string(cmd.strip())) for cmd
                                 in cmds if cmd.strip()]
+                    
                     sudoers_info.append(
                         {
-                            'users': users,  # if begins with % it's a group => to manage soon
+                            'users': users,
                             'hosts': hosts,
                             'runas': runas,
-                            'directives': [directive.strip() for directive in m.group(3).split(':') if
-                                           directive.strip()],
+                            'directives': m.group("directives"),
                             'cmds': commands,
                         }
                     )
@@ -212,6 +213,7 @@ class FileManager:
                     pass
 
         return (sudoers_info, ld_peload)
+
 
     def parse_nfs_conf(self, path):
         """

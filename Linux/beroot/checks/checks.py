@@ -4,7 +4,8 @@ import os
 import subprocess
 
 from beroot.analyse.binaries import Binaries
-from beroot.checks.exploit import Exploit
+from beroot.checks.exploit import Exploit  
+from beroot.checks.sudo_list import SudoList
 from beroot.conf.files import FileManager
 from beroot.conf.users import Users
 
@@ -18,12 +19,7 @@ class Checks:
     def __init__(self):
         self.interesting_bin = Binaries()
         self.exploit = Exploit()
-
-    def get_users(self):
-        """
-        Get list of all users with their uid, gid
-        """
-        return Users()
+        self.users = Users()
 
     def get_possible_exploit(self):
         """
@@ -88,9 +84,10 @@ class Checks:
 
         return 'files_permissions', result
 
-    def check_sudoers(self):
+    def check_sudo_rules(self):
         """
         Check sudoers file - /etc/sudoers
+        If not possible (permission denied), try using sudo -l
         """
         result = ([], False)
         sfile = '/etc/sudoers'
@@ -98,8 +95,10 @@ class Checks:
 
         if fm.file.is_readable:
             result = fm.parse_sudoers(sfile)
-
-        return 'sudoers_file', result
+        else:
+            result = SudoList().parse()
+        
+        return 'sudo_rules', (result, False)
 
     def check_nfs_root_squashing(self):
         """
@@ -130,7 +129,7 @@ class Checks:
             self.check_suid_bin,
             self.check_nfs_root_squashing,
             self.is_docker_installed,
-            self.check_sudoers,
+            self.check_sudo_rules,
             self.get_possible_exploit,
         ]
 
