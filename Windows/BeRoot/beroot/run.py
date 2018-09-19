@@ -348,3 +348,10 @@ def check_all(cmd=None):
             'Category': 'No Luck',
             'All': '\nNothing found !'
         }
+
+
+def run(cmd=None):
+    results = []
+    for r in check_all(cmd):
+        results.append(r)
+    return results

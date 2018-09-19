@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from beroot.run_checks import check_all, get_sofwares
+from beroot.run import check_all, get_sofwares
 import argparse
 import time
 import os
@@ -56,7 +56,7 @@ def print_output(output, write=False, file=None):
         f.close()
 
 
-def run(cmd, list_softwares, write):
+def run_check_all(cmd, list_softwares, write):
     if not list_softwares:
         # Realize all classic checks
         for r in check_all(cmd):
@@ -95,7 +95,7 @@ if __name__ == '__main__':
         f.close()
 
     start_time = time.time()
-    for r in run(args.cmd, args.list, args.write):
+    for r in run_check_all(args.cmd, args.list, args.write):
         try:
             print_output(r, args.write, path)
         except Exception:
