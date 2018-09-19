@@ -34,6 +34,7 @@ class Analyse:
         self.suid_files = None
         self.color = color
         self.bcolors = Bcolors
+        self.results = []
 
     def print_log(self, level='', msg=''):
         prefix = ''
@@ -56,6 +57,8 @@ class Analyse:
 
         elif level == 'debug':
             prefix = '[?] '
+
+        self.results.append((level, msg))
 
         print('{prefix}{msg}'.format(prefix=prefix, msg=msg))
 
@@ -304,19 +307,19 @@ class Analyse:
         """
         if os.geteuid() == 0:
             self.print_log('error', 'You are already root.')
-            return
+        else:
+            for module, result in self.checks.run():
+                try:
+                    self.print_log('', '\n################# {module} #################\n'.format(
+                        module=module.replace('_', ' ').capitalize()))
 
-        for module, result in self.checks.run():
+                    self.nothing_found = True
+                    self.anaylyse_result(module, result)
+                    if self.nothing_found:
+                        self.print_log('error', 'Nothing found !')
 
-            try:
-                self.print_log('', '\n################# {module} #################\n'.format(
-                    module=module.replace('_', ' ').capitalize()))
+                except Exception:
+                    # Print full stracktrace to understand the error
+                    self.print_log('error', traceback.format_exc())
 
-                self.nothing_found = True
-                self.anaylyse_result(module, result)
-                if self.nothing_found:
-                    self.print_log('error', 'Nothing found !')
-
-            except Exception:
-                # Print full stracktrace to understand the error
-                self.print_log('error', traceback.format_exc())
+        return self.results
