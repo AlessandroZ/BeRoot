@@ -296,10 +296,11 @@ class Analyse:
 
         elif module == 'exploit':
             prefix = 'error'
-            output = result.decode()
-            if 'CVE' in output:
-                prefix = 'ok'
-            self.print_log(prefix, 'CVE found!\n{output}'.format(output=output))
+            if result:
+                output = result.decode()
+                if 'CVE' in output:
+                    prefix = 'ok'
+                self.print_log(prefix, 'CVE found!\n{output}'.format(output=output))
 
     def run(self):
         """
