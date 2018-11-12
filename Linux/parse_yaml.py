@@ -25,8 +25,8 @@ for file in os.listdir(root):
                 if gtfo_bin:
                     functions = gtfo_bin['functions']
                     # Sorted by priority
-                    for func in ['execute-interactive', 'execute-non-interactive', 'file-write', 'file-read',
-                                 'sudo-enabled', 'download', 'upload']:
+                    for func in ['shell', 'command', 'file-write', 'file-read',
+                                 'sudo', 'file-download', 'file-upload']:
                         if func in functions:
                             results[binary] = functions[func][0]['code']
                             break
