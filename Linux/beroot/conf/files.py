@@ -212,8 +212,7 @@ class FileManager:
                 except Exception as e:
                     pass
 
-        return (sudoers_info, ld_peload)
-
+        return sudoers_info, ld_peload
 
     def parse_nfs_conf(self, path):
         """

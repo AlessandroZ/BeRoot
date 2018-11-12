@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import json
-import yaml # install pyyaml if needed
+import yaml  # install pyyaml if needed
 
 """
 Get a dictionary from yaml files

@@ -4,7 +4,7 @@ import os
 import stat
 import traceback
 
-from beroot.analyse.binaries import Binaries
+from .binaries import Binaries
 
 
 class Bcolors:
@@ -133,7 +133,7 @@ class Analyse:
 
     def anaylyse_sudo_rules(self, sudoers_info, ld_preload, user, user_chain=''):
         """
-        sudoers_info is a didctonary containing all rules found on the sudoers file
+        sudoers_info is a dictionary containing all rules found on the sudoers file
         ld_preload variable is a boolean saying that LD_PRELOAD on the env_keep variable
         user is an object containing the current user properties
         """
@@ -222,13 +222,15 @@ class Analyse:
                                             user=u.pw_name, line=cmd.line.strip()))
 
                                         # Check all sensitive files for write access using the impersonated user
-                                        self.anaylyse_files_permissions(self.sensitive_files, user=u, check_wildcards=False)
+                                        self.anaylyse_files_permissions(self.sensitive_files, user=u,
+                                                                        check_wildcards=False)
 
                                         # Check suid files for write access using the impersonated user
                                         self.anaylyse_suids(self.suid_files, user=u, ckeck_only_write_access=True)
 
                                         # Realize same check on sudoers file using the impersonated user
-                                        self.anaylyse_sudo_rules(sudoers_info=sudoers_info, ld_preload=False, user=u, user_chain=user_chain + ' -> ' + u.pw_name)
+                                        self.anaylyse_sudo_rules(sudoers_info=sudoers_info, ld_preload=False, user=u,
+                                                                 user_chain=user_chain + ' -> ' + u.pw_name)
 
                                 else:
                                     ok = True  # should be a false positive but I prefer to print it anyway
@@ -282,7 +284,8 @@ class Analyse:
             self.anaylyse_files_permissions(result, user=self.users.current)  # users is a pwd objet
 
         elif module == 'sudo_rules':
-            self.anaylyse_sudo_rules(sudoers_info=result[0], ld_preload=result[1], user=self.users.current, user_chain=self.users.current.pw_name)
+            self.anaylyse_sudo_rules(sudoers_info=result[0], ld_preload=result[1], user=self.users.current,
+                                     user_chain=self.users.current.pw_name)
 
         elif module == 'suid_bin':
             self.suid_files = result
@@ -320,7 +323,7 @@ class Analyse:
                         self.print_log('error', 'Nothing found !')
 
                 except Exception:
-                    # Print full stracktrace to understand the error
+                    # Print full stacktrace to understand the error
                     self.print_log('error', traceback.format_exc())
 
         return self.results

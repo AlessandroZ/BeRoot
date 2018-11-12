@@ -122,7 +122,7 @@ class Checks:
 
     def run(self):
         """
-        Run all functions to retrieve system misconfigurations
+        Run all functions to retrieve system misconfiguration
         """
         checks = [
             self.check_files_permissions,

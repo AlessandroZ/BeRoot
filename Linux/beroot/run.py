@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from beroot.analyse.analyse import Analyse
-from beroot.checks.checks import Checks
+from .analyse.analyse import Analyse
+from .checks.checks import Checks
 
 
 def run():
