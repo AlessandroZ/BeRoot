@@ -148,7 +148,7 @@ class Analyse:
 
             need_password = True
             # NOPASSWD present means that no password is required to execute the commands
-            if 'NOPASSWD' in sudoers['directives']:
+            if 'NOPASSWD' in sudoers['directives'] or '!authenticate' in sudoers['directives']:
                 need_password = False
 
             # Check if the sudoers line affects the current user or his group
@@ -303,7 +303,7 @@ class Analyse:
                 output = result.decode()
                 if 'CVE' in output:
                     prefix = 'ok'
-                self.print_log(prefix, 'CVE found!\n{output}'.format(output=output))
+                    self.print_log(prefix, 'CVE found!\n{output}'.format(output=output))
 
     def run(self):
         """

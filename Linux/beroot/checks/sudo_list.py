@@ -20,6 +20,7 @@ class SudoList:
     def __init__(self):
         self.sudoers_pattern = re.compile(r"(\( ?(?P<runas>.*) ?\)) ?(?P<directives>(\w+: ?)*)(?P<cmds>.*)")
         self.all_rules = []
+        self.sudo_cmd = 'echo "test" | sudo -S -ll'
 
     def run_cmd(self, cmd, is_ok=False):
         """
@@ -37,43 +38,29 @@ class SudoList:
 
     def parse_sudo_list(self, sudo_list):
         """
-        Parse output from sudo -l
+        Parse output from sudo -ll
         """
         sudoers_info = []
-        user_rules = False
-        login = None
-        host = None
         fm = FileManager('')
+        user = sudo_list[sudo_list.index('User '):].split(' ')[1]
+        sudoers_entries = sudo_list.lower().split('sudoers entry')
+        for sudo_rule in sudoers_entries:
 
-        for line in sudo_list.split('\n'):
-            if not line.strip(): 
+            if not sudo_rule.startswith(':'):
                 continue
 
-            if user_rules:
-                m = self.sudoers_pattern.search(line.strip())
-                runas = m.group("runas")
-                cmds = m.group("cmds")
+            idx = sudo_rule.index('commands:\n')
+            info = [i.split(':')[1].strip() for i in sudo_rule[:idx].strip().split('\n')]
+            _, run_as_users, run_as_grp, options = info
+            cmds = [PathInFile(line=cmd.strip(), paths=fm.extract_paths_from_string(cmd.strip()))
+                    for cmd in sudo_rule[idx:].replace('commands:\n', '').split('\n') if cmd]
 
-                # cmds could be a list of many cmds with many path (split all cmd and check if writable path inside)
-                commands = [PathInFile(line=cmd.strip(), paths=fm.extract_paths_from_string(cmd.strip())) for cmd
-                            in cmds.split(',') if cmd.strip()]
-
-                sudoers_info.append({
-                    'users': [user],
-                    'hosts': [host],
-                    'runas': runas,
-                    'directives': m.group("directives"),
-                    'cmds': commands,
-                })
-
-            if line.startswith('User'):
-                # Next lines will contain user rules
-                user_rules = True
-
-                # Extract login and host on such kinf of line: "User test may run the following commands on xxxxx:"
-                l = line.split()
-                user = l[1]
-                host = l[len(l)-1][:-1]
+            sudoers_info.append({
+                'users': [user],
+                'runas': run_as_users,
+                'directives': options,
+                'cmds': cmds,
+            })
 
         self.all_rules += sudoers_info
         return sudoers_info
@@ -115,7 +102,7 @@ class SudoList:
         for u in users_chain:
             data += "sudo su {user} << 'EOF'\n".format(user=u)
 
-        data += 'echo "test" | sudo -S -l\n'
+        data += self.sudo_cmd + '\n'
         
         if users_chain: 
             data += '\nEOF'
@@ -149,14 +136,14 @@ class SudoList:
                     try:
                         sudo_rules = self.parse_sudo_list(sudo_list)
                         self.impersonate_mechanism(u, sudo_rules, [user, u], already_impersonated)
-                    except:
+                    except Exception:
                         print(traceback.format_exc())
                         continue
 
                     already_impersonated.append(u)
 
     def parse(self):
-        sudo_list = self.run_cmd('echo "test" | sudo -S -l')
+        sudo_list = self.run_cmd(self.sudo_cmd)
         if sudo_list:
             sudo_rules = self.parse_sudo_list(sudo_list)
             current_user = Users().current.pw_name
