@@ -25,10 +25,14 @@ for file in os.listdir(root):
                 if gtfo_bin:
                     functions = gtfo_bin['functions']
                     # Sorted by priority
-                    for func in ['shell', 'command', 'file-write', 'file-read',
-                                 'sudo', 'file-download', 'file-upload']:
+                    for func in ['sudo', 'command', 'file-write', 'file-read',
+                                 'shell', 'file-download', 'file-upload']:
                         if func in functions:
-                            results[binary] = functions[func][0]['code']
+                            sep = '----' if len(functions[func]) > 1 else ''
+                            c = ''
+                            for code in functions[func]:
+                                c += code['code'] + '\n' + sep
+                            results[binary] = c
                             break
 
 json_parsed = json.dumps(results, indent=4, sort_keys=True)
