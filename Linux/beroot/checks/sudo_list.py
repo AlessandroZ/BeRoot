@@ -48,17 +48,27 @@ class SudoList:
 
             if not sudo_rule.startswith(':'):
                 continue
-
-            idx = sudo_rule.index('commands:\n')
-            info = [i.split(':')[1].strip() for i in sudo_rule[:idx].strip().split('\n')]
-            _, run_as_users, run_as_grp, options = info
-            cmds = [PathInFile(line=cmd.strip(), paths=fm.extract_paths_from_string(cmd.strip()))
-                    for cmd in sudo_rule[idx:].replace('commands:\n', '').split('\n') if cmd]
+            pattern = re.compile(
+                r"\s*" +
+                "runasusers:\s*(?P<runasusers>\w*)" +
+                "\s*" +
+                "(runasgroups:\s*(?P<runasgroups>\w*))*" +
+                "\s*" +
+                "(options:\s*(?P<options>[\!\w]*))*" +
+                "\s*" +
+                "(commands:\s*(?P<commands>.*))*",
+                re.DOTALL
+            )
+            m = pattern.search(sudo_rule)
+            # Default to empty string '' for values we didn't match
+            data = m.groupdict('')
+            # Remove whitespace and extra tabs from list of commands
+            cmds = data['commands'].strip().replace('\t', '').split('\n')
 
             sudoers_info.append({
                 'users': [user],
-                'runas': run_as_users,
-                'directives': options,
+                'runas': data['runasusers'],
+                'directives': data['options'],
                 'cmds': cmds,
             })
 
