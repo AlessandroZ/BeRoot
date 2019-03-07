@@ -63,7 +63,8 @@ class SudoList:
             # Default to empty string '' for values we didn't match
             data = m.groupdict('')
             # Remove whitespace and extra tabs from list of commands
-            cmds = data['commands'].strip().replace('\t', '').split('\n')
+            cmds = [PathInFile(line=cmd.strip(), paths=fm.extract_paths_from_string(cmd.strip()))
+                    for cmd in data['commands'].strip().replace('\t', '').split('\n')]
 
             sudoers_info.append({
                 'users': [user],
