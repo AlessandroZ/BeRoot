@@ -121,8 +121,8 @@ def format_results(sk, p, check_subdir=False):
     if not check_subdir:
         results['Writable directory'] = os.path.dirname(p.path)
     else:
-        results['Writables path found'] = []
+        results['Writable paths found'] = []
         for d in p.sub_dir_writables:
-            results['Writables path found'].append(d)
+            results['Writable paths found'].append(d)
 
     return results

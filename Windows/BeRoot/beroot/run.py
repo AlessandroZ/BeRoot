@@ -46,7 +46,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'registry key with writable access',
+                    'Function': 'Registry key with writable access',
                     'Results': b
                 }
             )
@@ -63,7 +63,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'path containing spaces without quotes',
+                    'Function': 'Path containing spaces without quotes',
                     'Results': b
                 }
             )
@@ -73,7 +73,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'binary located on a writable directory',
+                    'Function': 'Binary located on a writable directory',
                     'Results': b
                 }
             )
@@ -86,12 +86,12 @@ class RunChecks(object):
     def get_services_vuln(self, args):
         results = []
 
-        # Return a boolean
+        # Returns a boolean
         b = check_services_creation_with_openscmanager()
         if b:
             results.append(
                 {
-                    'Function': 'permission to create a service with openscmanager',
+                    'Function': 'Permission to create a service with openscmanager',
                     'Results': b
                 }
             )
@@ -101,7 +101,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'Check services that could its configuration could be modified',
+                    'Function': 'Check for services whose configuration could be modified',
                     'Results': b
                 }
             )
@@ -146,7 +146,7 @@ class RunChecks(object):
 
     def get_tasks_vulns(self, args):
         """
-         Taskscheduler
+        Taskscheduler
         """
         results = []
 
@@ -155,7 +155,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'permission to write on the task directory: %s' % self.t.task_directory,
+                    'Function': 'Permission to write on the task directory: %s' % self.t.task_directory,
                     'Results': b
                 }
             )
@@ -179,7 +179,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'Unattend file found',
+                    'Function': 'Unattended file found',
                     'Results': b
                 }
             )
@@ -189,7 +189,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'Unattend file found',
+                    'Function': 'Unattended file found',
                     'Results': b
                 }
             )
@@ -201,7 +201,7 @@ class RunChecks(object):
 
     def get_installed_softwares(self):
         """
-        Useful to find Windows Redistributable version or softwares vulnerable
+        Useful to find Windows Redistributable version or software vulnerable
         """
 
         sof_list = []
@@ -210,23 +210,23 @@ class RunChecks(object):
 
         results = [
             {
-                'Function': 'softwares installed',
+                'Function': 'Software installed',
                 'Results': sof_list
             },
             {
-                'Function': 'av installed',
+                'Function': 'AV installed',
                 'Results': self.softwares.get_av_software()
             }
         ]
 
         return {
-            'Category': 'Softwares installed',
+            'Category': 'Software installed',
             'All': results
         }
 
     def is_user_an_admin(self, args):
         """
-        Check if the user is on already administrator
+        Check if the user is already an administrator
         """
         results = []
 
@@ -235,7 +235,7 @@ class RunChecks(object):
         if b:
             results.append(
                 {
-                    'Function': 'is user in the administrator group',
+                    'Function': 'Is user in the Administrators group',
                     'Results': b
                 }
             )

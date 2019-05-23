@@ -246,7 +246,7 @@ class WebClient(object):
 
                     if self.is_service_running(trigger.name):
                         # service could not be used as trigger
-                        print('[-] Enable to stop the sevice {name}'.format(name=trigger.name))
+                        print('[-] Unable to stop the sevice {name}'.format(name=trigger.name))
                         continue
                     print('[+] Service {name} has been stopped'.format(name=trigger.name))
 
