@@ -78,9 +78,12 @@ class GetServices(object):
         """
         try:
             sv = OpenService(hnd, s.name, SERVICE_START)
-            return True
+            if sv: 
+                return True
         except Exception:
-            return False
+            pass
+        
+        return False
 
     def service_stop(self, hnd, s):
         """
@@ -88,9 +91,12 @@ class GetServices(object):
         """
         try:
             sv = OpenService(hnd, s.name, SERVICE_STOP)
-            return True
+            if sv:
+                return True
         except Exception:
-            return False
+            pass
+        
+        return False
 
     def change_sercice_configuration(self, hnd, s):
         """
@@ -98,6 +104,9 @@ class GetServices(object):
         """
         try:
             sv = OpenService(hnd, s.name, SERVICE_CHANGE_CONFIG)
-            return True
+            if sv:
+                return True
         except Exception:
-            return False
+            pass
+
+        return False
