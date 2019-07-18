@@ -1,6 +1,6 @@
 # MS16-075
 
-//MS16-075 checks has been removed from the BeRoot project. However, I let the poc here.//
+*MS16-075 checks has been removed from the BeRoot project. However, I let the poc here.*
 
 For French user, I recommend the article written on the MISC 90 which explain in details how it works. 
 
@@ -25,7 +25,7 @@ Lots of code uses beroot package, so some actions are needed:
 * Move webclient directory into [beroot\modules\checks](https://github.com/AlessandroZ/BeRoot/tree/master/Windows/BeRoot/beroot/modules/checks)
 * Move poc.py on the [Beroot](https://github.com/AlessandroZ/BeRoot/tree/master/Windows/BeRoot) directory. 
 * Install impacket (`pip install impacket`)
-* Change on poc.py file the command line you want to execute. 
+* Change on [poc.py](https://github.com/AlessandroZ/BeRoot/blob/master/Windows/templates/MS16-075/poc.py#L29) file the command line you want to execute. 
 * Run it: `python poc.py`
 
 

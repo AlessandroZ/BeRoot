@@ -202,7 +202,7 @@ These privileges are:
 * SeLoadDriver
 * SeImpersonate & SeAssignPrimaryToken 
 
-Beroot lists all privileges we have, and highlight if we have one of these tokens.
+Beroot lists all privileges we have and highlight if we have one of these tokens.
 
 __How to exploit__: Everything is well explained on __Andrea Pierini__'s [pdf](https://github.com/AlessandroZ/BeRoot/blob/master/Windows/templates/RomHack%202018%20-%20Andrea%20Pierini%20-%20whoami%20priv%20-%20show%20me%20your%20Windows%20privileges%20and%20I%20will%20lead%20you%20to%20SYSTEM.pdf). 
 
