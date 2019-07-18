@@ -56,10 +56,10 @@ def print_output(output, write=False, file=None):
         f.close()
 
 
-def run_check_all(cmd, list_softwares, write):
+def run_check_all(list_softwares, write):
     if not list_softwares:
         # Realize all classic checks
-        for r in check_all(cmd):
+        for r in check_all():
             yield r
 
     # List softwares only when it is asked by the user or when the result is written on a file
@@ -83,8 +83,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Windows Privilege Escalation")
     parser.add_argument("-l", "--list", action="store_true", help="list all softwares installed (not run by default)")
     parser.add_argument("-w", "--write", action="store_true", help="write output")
-    parser.add_argument("-c", "--cmd", action="store", default="whoami",
-                        help="cmd to execute for the webclient check (default: whoami)")
     args = parser.parse_args()
 
     path = None
@@ -95,7 +93,7 @@ if __name__ == '__main__':
         f.close()
 
     start_time = time.time()
-    for r in run_check_all(args.cmd, args.list, args.write):
+    for r in run_check_all(args.list, args.write):
         try:
             print_output(r, args.write, path)
         except Exception:

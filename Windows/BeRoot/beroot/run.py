@@ -13,7 +13,6 @@ from .modules.get_info.from_registry import Registry
 from .modules.get_info.from_taskscheduler import GetTaskschedulers
 from .modules.get_info.softwares_list import Softwares
 from .modules.get_info.system_info import System
-from .modules.checks.webclient.webclient import WebClient
 
 
 class RunChecks(object):
@@ -250,9 +249,9 @@ class RunChecks(object):
         This technique should not work on windows 10
         """
         # From msdn: https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
-        # 6.0 => Windows Vista	/ 	Windows Server 2008
-        # 6.1 => Windows 7 		/ 	Windows Server 2008 R2
-        # 6.2 => Windows 8 		/ 	Windows Server 2012
+        # 6.0 => Windows Vista  /   Windows Server 2008
+        # 6.1 => Windows 7      /   Windows Server 2008 R2
+        # 6.2 => Windows 8      /   Windows Server 2012
 
         results = []
         s = System()
@@ -284,32 +283,6 @@ class RunChecks(object):
             'All': results
         }
 
-    def check_webclient(self, cmd='whoami'):
-        """
-        This technique has been patched on June 2016
-        """
-        results = []
-
-        print('-------------- Get System Priv with WebClient --------------\n')
-
-        w = WebClient()
-        # Returns boolean
-        b = w.run(self.service, cmd)
-        if b:
-            results.append(
-                {
-                    'Function': 'NTLM System token retrieved: ',
-                    'Results': b
-                }
-            )
-
-        return {
-            'NotPrint': True,
-            'Category': 'Get System Priv with WebClient',
-            'All': results
-        }
-
-
 def get_sofwares():
     checks = RunChecks()
     yield checks.get_installed_softwares()
@@ -325,10 +298,9 @@ def check_all(cmd=None):
         checks.get_startup_key_vuln,  # Startup keys checks
         checks.get_tasks_vulns,  # Taskschedulers checks
         checks.get_interesting_files,  # Interesting files checks
-        # checks.get_installed_softwares, 			# Softwares checks
+        # checks.get_installed_softwares,           # Softwares checks
         checks.is_user_an_admin,  # System if already admin (uac not bypassed yet)
         checks.get_well_known_dll_injections,  # Well known windows services vulnerable to dll hijacking
-        checks.check_webclient
     ]
 
     for c in to_checks:
