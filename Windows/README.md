@@ -5,7 +5,7 @@ A compiled version is available [here](https://github.com/AlessandroZ/BeRoot/rel
 
 It will be added to the [pupy](https://github.com/n1nj4sec/pupy/) project as a post exploitation module (so it will be executed in memory without touching the disk). 
 
-Except one method, this tool is only used to detect and not to exploit. If something is found, [templates](https://github.com/AlessandroZ/BeRoot/tree/master/templates/) could be used to exploit it. To use it, just create a __test.bat__ file located next to the service / DLL used. It should execute it once called. Depending on the Redistributable Packages installed on the target host, these binaries may not work.  
+This tool is only used to detect and not to exploit. If something is found, [templates](https://github.com/AlessandroZ/BeRoot/tree/master/Windows/templates) could be used to exploit it. To use it, just create a __test.bat__ file located next to the service / DLL used. It should execute it once called. Depending on the Redistributable Packages installed on the target host, these binaries may not work.  
 
 Run it
 ----
@@ -27,7 +27,6 @@ optional arguments:
   -h, --help         show this help message and exit
   -l, --list         list all softwares installed (not run by default)
   -w, --write        write output
-  -c CMD, --cmd CMD  cmd to execute for the webclient check (default: whoami)
 ```
 
 All detection methods are described on the following document. 
@@ -58,7 +57,7 @@ The vulnerable path runs as:
 * _a service_: create a malicious service (or compile the service template)
 * _a classic executable_: Create your own executable. 
 
- Writable directory
+Writable directory
 ----
 
 Consider the following file path:
@@ -122,31 +121,6 @@ Or you can try using these tools:
 * [Ikeext-Privesc](https://github.com/itm4n/Ikeext-Privesc) powershell script
 * [Wlbsctrl_poc](https://github.com/djhohnstein/wlbsctrl_poc) in C++
 
-MS16-075
-----
-
-For French user, I recommend the article written on the MISC 90 which explain in details how it works. 
-
-This vulnerability has been corrected by Microsoft with MS16-075, however many servers are still vulnerable to this kind of attack. 
-I have been inspired from the C++ POC available [here](https://github.com/secruul/SysExec)
-
-Here are some explaination (not in details):
-
-1. Start Webclient service (used to connect to some shares) using some magic tricks (using its UUID)
-2. Start an HTTP server locally
-3. Find a service which will be used to trigger a _SYSTEM NTLM hash_. 
-4. Enable file tracing on this service modifying its registry key to point to our webserver (_\\\\127.0.0.1@port\\tracing_)
-5. Start this service
-6. Our HTTP Server start a negotiation to get the _SYSTEM NTLM hash_
-7. Use of this hash with SMB to execute our custom payload ([SMBrelayx](https://github.com/CoreSecurity/impacket/blob/master/examples/smbrelayx.py) has been modify to realize this action)
-8. Clean everything (stop the service, clean the regritry, etc.).
-
-
-__How to exploit__: BeRoot realize this exploitation, change the "_-c_" option to execute custom command on the vulnerable host.
-```
-beRoot.exe -c "net user Zapata LaLuchaSigue /add"
-beRoot.exe -c "net localgroup Administrators Zapata /add"
-```
 
 AlwaysInstallElevated registry key
 ----
@@ -192,23 +166,57 @@ Should looks like:
 </UserAccounts>
 ```
 
-Other possible misconfigurations
+Services
 ----
 
-Other tests are realized to check if it's possible to: 
+Checks if it's possible to: 
 * Modify an existing service
 * Create a new service
-* Modify a startup key (on HKLM)
-* Modify directory where all scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
+
+//Note: Checks on path are performed on all services ("Path containing space without quotes" and "Writable directory")//
+
+Tasks Scheduler
+----
+
+Check if it's possible to modify the directory where all scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
+
+//Note: Checks on path are performed on all scheduled tasks ("Path containing space without quotes" and "Writable directory")//
+
+
+Startup Key
+----
+
+Check if it's possible to modify a startup key (on HKLM)
+
+//Note: Checks on path are performed on all startup keys ("Path containing space without quotes" and "Writable directory")//
+
+
+Windows Privileges & Tokens
+----
+
+Thanks to __Andrea Pierini__'s work, some interesting Windows privileges could be used to escalate privileges. 
+These privileges are: 
+* SeDebug
+* SeRestore & SeBackup & SeTakeOwnership
+* SeTcb & SeCreateToken
+* SeLoadDriver
+* SeImpersonate & SeAssignPrimaryToken 
+
+Beroot lists all privileges we have, and highlight if we have one of these tokens.
+
+__How to exploit__: Everything is well explained on __Andrea Pierini__'s [pdf](https://github.com/AlessandroZ/BeRoot/blob/master/Windows/templates/RomHack%202018%20-%20Andrea%20Pierini%20-%20whoami%20priv%20-%20show%20me%20your%20Windows%20privileges%20and%20I%20will%20lead%20you%20to%20SYSTEM.pdf). 
+
+
+Not managed by Beroot
+----
+
+Some misconfigurations that could lead to privilege escalation are not checked by Beroot. These actions need monitoring and should be done manually: 
+* When a privilege account access a non privilege file: http://offsec.provadys.com/intro-to-file-operation-abuse-on-Windows.html
+* Dll Hijacking
+* Outdated Windows: (use [Watson](https://github.com/rasta-mouse/Watson) or [wesng](https://github.com/bitsadmin/wesng) and check on [github](https://github.com/SecWiki/windows-kernel-exploits) for exploits).
+
 
 Special thanks
 ----
 * Good description of each checks: https://toshellandback.com/2015/11/24/ms-priv-esc/
-* C++ POC: https://github.com/secruul/SysExec
-* Impacket as always, awesome work: https://github.com/CoreSecurity/impacket/
-
-
-----
-| __Alessandro ZANNI__    |
-| ------------- |
-| __zanni.alessandro@gmail.com__  |
+* Andrea Pierini: https://2018.romhack.io/slides/RomHack%202018%20-%20Andrea%20Pierini%20-%20whoami%20priv%20-%20show%20me%20your%20Windows%20privileges%20and%20I%20will%20lead%20you%20to%20SYSTEM.pdf
