@@ -173,14 +173,14 @@ Checks if it's possible to:
 * Modify an existing service
 * Create a new service
 
-//Note: Checks on path are performed on all services ("Path containing space without quotes" and "Writable directory")//
+*Note: Checks on path are performed on all services ("Path containing space without quotes" and "Writable directory")*
 
 Tasks Scheduler
 ----
 
 Check if it's possible to modify the directory where all scheduled tasks are stored: "_C:\Windows\system32\Tasks_"
 
-//Note: Checks on path are performed on all scheduled tasks ("Path containing space without quotes" and "Writable directory")//
+*Note: Checks on path are performed on all scheduled tasks ("Path containing space without quotes" and "Writable directory")*
 
 
 Startup Key
@@ -188,7 +188,7 @@ Startup Key
 
 Check if it's possible to modify a startup key (on HKLM)
 
-//Note: Checks on path are performed on all startup keys ("Path containing space without quotes" and "Writable directory")//
+*Note: Checks on path are performed on all startup keys ("Path containing space without quotes" and "Writable directory")*
 
 
 Windows Privileges & Tokens
@@ -219,4 +219,4 @@ Some misconfigurations that could lead to privilege escalation are not checked b
 Special thanks
 ----
 * Good description of each checks: https://toshellandback.com/2015/11/24/ms-priv-esc/
-* Andrea Pierini: https://2018.romhack.io/slides/RomHack%202018%20-%20Andrea%20Pierini%20-%20whoami%20priv%20-%20show%20me%20your%20Windows%20privileges%20and%20I%20will%20lead%20you%20to%20SYSTEM.pdf
+* Andrea Pierini [work](https://2018.romhack.io/slides/RomHack%202018%20-%20Andrea%20Pierini%20-%20whoami%20priv%20-%20show%20me%20your%20Windows%20privileges%20and%20I%20will%20lead%20you%20to%20SYSTEM.pdf)
