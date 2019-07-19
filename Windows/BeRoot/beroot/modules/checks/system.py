@@ -74,3 +74,5 @@ def can_get_admin_access():
             ctypes.windll.kernel32.CloseHandle(proc)
         except Exception:
             pass
+
+    return False
