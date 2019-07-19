@@ -19,14 +19,13 @@ Run it
 |====================================================================|
 
 
-usage: beRoot.exe [-h] [-l] [-w] [-c CMD]
+usage: beRoot.exe [-h] [-l]
 
 Windows Privilege Escalation
 
 optional arguments:
   -h, --help         show this help message and exit
   -l, --list         list all softwares installed (not run by default)
-  -w, --write        write output
 ```
 
 All detection methods are described on the following document. 
@@ -207,13 +206,45 @@ Beroot lists all privileges we have and highlight if we have one of these tokens
 __How to exploit__: Everything is well explained on __Andrea Pierini__'s [pdf](https://github.com/AlessandroZ/BeRoot/blob/master/Windows/templates/RomHack%202018%20-%20Andrea%20Pierini%20-%20whoami%20priv%20-%20show%20me%20your%20Windows%20privileges%20and%20I%20will%20lead%20you%20to%20SYSTEM.pdf). 
 
 
+Local account with empty passwords
+----
+
+All local accounts are tested to detect empty passwords. 
+
+Local account with passwordreq:no
+----
+
+Idea come from 0xRick [write up](https://0xrick.github.io/hack-the-box/access/).
+
+Checking for user account options, we could see this kind of output: 
+
+```
+> net user username
+....
+Password Required   No
+...
+```
+This means than the option `/passwordreq:no` has been set
+```
+> net user /passwordreq:no username
+```
+
+This directive allows us to use `runas` without needed the user account password. 
+
+```
+> runas /user:username /savecred cmd.exe
+```
+
+Check 0xRick blog post to have a better example.
+
+
 Not managed by Beroot
 ----
 
 Some misconfigurations that could lead to privilege escalation are not checked by Beroot. These actions need monitoring and should be done manually: 
 * When a privilege account access a non privilege file: http://offsec.provadys.com/intro-to-file-operation-abuse-on-Windows.html
 * Dll Hijacking
-* Outdated Windows: (use [Watson](https://github.com/rasta-mouse/Watson) or [wesng](https://github.com/bitsadmin/wesng) and check on [github](https://github.com/SecWiki/windows-kernel-exploits) for exploits).
+* Outdated Windows (use [Watson](https://github.com/rasta-mouse/Watson) or [wesng](https://github.com/bitsadmin/wesng) and check on [github](https://github.com/SecWiki/windows-kernel-exploits) for exploits).
 
 
 Special thanks
