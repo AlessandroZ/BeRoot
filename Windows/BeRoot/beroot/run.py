@@ -6,8 +6,11 @@ from .modules.checks.path_manipulation_checks import is_root_dir_writable, space
 from .modules.checks.services_checks import check_services_creation_with_openscmanager, check_service_permissions
 from .modules.checks.filesystem_checks import check_unattended_files, check_sysprep_files, \
     checks_writeable_directory_on_path_environment_variable, check_well_known_dll_injections
+from .modules.checks.privileges import check_currrent_user_privilege
+from .modules.checks.users import check_empty_passwords, check_passwordreq_option
 from .modules.checks.registry_checks import registry_key_with_write_access, check_msi_misconfiguration
 from .modules.checks.system import can_get_admin_access
+from .modules.get_info.users_info import Users
 from .modules.get_info.from_scmanager_services import GetServices
 from .modules.get_info.from_registry import Registry
 from .modules.get_info.from_taskscheduler import GetTaskschedulers
@@ -34,261 +37,221 @@ class RunChecks(object):
 
         self.softwares = Softwares()
 
-    def _check_registry_misconfiguration(self, obj):
-        """
-        Check registry misconfiguration
-        """
-        results = []
+    def tab_of_dict_to_string(self, tab):
+        '''
+        Convert a tab of dic to a string
+        '''
+        string = ''
+        for values in tab:
+            for value in values:
+                if 'list' in str(type(values[value])):
+                    string += '%s\n' % str(value)
+                    for w in values[value]:
+                        string += '\t- %s\n' % w
+                else:
+                    string += '%s: %s\n' % (value, str(values[value]))
+            string += '\n'
+        return string
 
-        # Returns a tab of string
-        b = registry_key_with_write_access(obj)
-        if b:
-            results.append(
-                {
-                    'Function': 'Registry key with writable access',
-                    'Results': b
-                }
+    def tab_to_string(self, tab):
+        '''
+        Convert a tab of string into a string
+        '''
+        string = ''
+        for value in tab:
+            string += '%s\n' % value
+        return string
+
+    def bool_to_string(self, value):
+        '''
+        Convert a bool to a string
+        '''
+        return str(value)
+
+    def _check_registry_misconfiguration(self, obj):
+        '''
+        Check registry misconfiguration
+        '''
+        return [
+            (
+                'Registry key with writable access', 
+                self.tab_to_string(registry_key_with_write_access(obj))
             )
-        return results
+        ]
 
     def _check_path_misconfiguration(self, obj):
-        """
+        '''
         Check path misconfiguration
-        """
-        results = []
-
-        # Returns a tab of dictionary
-        b = space_and_no_quotes(obj)
-        if b:
-            results.append(
-                {
-                    'Function': 'Path containing spaces without quotes',
-                    'Results': b
-                }
+        '''
+        return [
+            (
+                'Path containing spaces without quotes', 
+                self.tab_of_dict_to_string(space_and_no_quotes(obj))
+            ), 
+            (
+                'Binary located on a writable directory', 
+                self.tab_of_dict_to_string(exe_with_writable_directory(obj))
             )
+        ]
 
-        # Returns a tab of dictionary
-        b = exe_with_writable_directory(obj)
-        if b:
-            results.append(
-                {
-                    'Function': 'Binary located on a writable directory',
-                    'Results': b
-                }
-            )
-
-        return results
-
-    # ------------------------------ By category ------------------------------
-
-    # Services
-    def get_services_vuln(self, args):
-        results = []
-
-        # Returns a boolean
-        b = check_services_creation_with_openscmanager()
-        if b:
-            results.append(
-                {
-                    'Function': 'Permission to create a service with openscmanager',
-                    'Results': b
-                }
-            )
-
-        # Returns a tab of dictionary
-        b = check_service_permissions(self.service)
-        if b:
-            results.append(
-                {
-                    'Function': 'Check for services whose configuration could be modified',
-                    'Results': b
-                }
-            )
-
-        results += self._check_path_misconfiguration(self.service)
-        results += self._check_registry_misconfiguration(self.service)
-
+    def get_services_vuln(self):
+        '''
+        Services
+        '''
         return {
-            'Category': 'Service',
-            'All': results
+            'category': 'Service',
+            'results': [
+                (
+                    'Permission to create a service with openscmanager', 
+                    self.bool_to_string(check_services_creation_with_openscmanager())
+                ), 
+                (
+                    'Check for services whose configuration could be modified', 
+                    self.tab_of_dict_to_string(check_service_permissions(self.service))
+                )
+            ] +  self._check_path_misconfiguration(self.service)
+            + self._check_registry_misconfiguration(self.service)
         }
 
-    def get_startup_key_vuln(self, args):
-        """
+    def get_startup_key_vuln(self):
+        '''
         Start up keys
-        """
-        results = self._check_registry_misconfiguration(self.startup)
-        results += self._check_path_misconfiguration(self.startup)
-
+        '''
         return {
-            'Category': 'Startup Keys',
-            'All': results
+            'category': 'Startup Keys',
+            'results': 
+                self._check_registry_misconfiguration(self.startup) + 
+                self._check_path_misconfiguration(self.startup)
         }
 
-    def get_msi_configuration(self, args):
-        """
+    def get_msi_configuration(self):
+        '''
         MSI configuration
-        """
-        results = []
-        b = check_msi_misconfiguration()
-        if b:
-            results.append(
-                {
-                    'Function': 'All MSI file are launched with SYSTEM privileges',
-                    'Results': b
-                }
-            )
+        '''
         return {
-            'Category': 'MSI misconfiguration',
-            'All': results
+            'category': 'MSI misconfiguration',
+            'results': [
+                (
+                    'MSI file launched with SYSTEM privileges', 
+                    self.bool_to_string(check_msi_misconfiguration())
+                )
+            ]
         }
 
-    def get_tasks_vulns(self, args):
-        """
+    def get_tasks_vulns(self):
+        '''
         Taskscheduler
-        """
-        results = []
-
-        # return a boolean
-        b = is_root_dir_writable(self.t.task_directory)
-        if b:
-            results.append(
-                {
-                    'Function': 'Permission to write on the task directory: %s' % self.t.task_directory,
-                    'Results': b
-                }
-            )
-
-        results += self._check_path_misconfiguration(self.task)
-
+        '''
         return {
-            'Category': 'Taskscheduler',
-            'All': results
+            'category': 'Taskscheduler',
+            'results': [
+                (
+                    'Permission to write on the task directory: %s' % self.t.task_directory, 
+                    self.bool_to_string(is_root_dir_writable(self.t.task_directory))
+                )
+            ] +  self._check_path_misconfiguration(self.task)
         }
 
-    #
-    def get_interesting_files(self, args):
-        """
+    def get_interesting_files(self):
+        '''
         Interesting files on the file system
-        """
-        results = []
-
-        # Returns a tab of string
-        b = check_unattended_files()
-        if b:
-            results.append(
-                {
-                    'Function': 'Unattended file found',
-                    'Results': b
-                }
-            )
-
-        # Returns a tab of string
-        b = check_sysprep_files()
-        if b:
-            results.append(
-                {
-                    'Function': 'Unattended file found',
-                    'Results': b
-                }
-            )
-
+        '''
         return {
-            'Category': 'Interesting files',
-            'All': results
+            'category': 'Interesting files',
+            'results': [
+                (
+                    'Unattended files', 
+                     self.tab_to_string(check_unattended_files())
+                ), 
+                (
+                    'Sysprep files', 
+                    self.tab_to_string(check_sysprep_files())
+                )
+            ]
         }
 
     def get_installed_softwares(self):
-        """
+        '''
         Useful to find Windows Redistributable version or software vulnerable
-        """
-
+        '''
         sof_list = []
         for soft in self.softwares.list_softwares:
             sof_list.append('%s %s' % (soft.name, soft.version))
 
-        results = [
-            {
-                'Function': 'Software installed',
-                'Results': sof_list
-            },
-            {
-                'Function': 'AV installed',
-                'Results': self.softwares.get_av_software()
-            }
-        ]
-
         return {
-            'Category': 'Software installed',
-            'All': results
+            'category': 'Softwares',
+            'results': [
+                (
+                    'Softwares installed', 
+                     self.tab_to_string(sof_list)
+                ), 
+                (
+                    'AV installed', 
+                    self.tab_to_string(self.softwares.get_av_software())
+                )
+            ]
         }
 
-    def is_user_an_admin(self, args):
-        """
-        Check if the user is already an administrator
-        """
-        results = []
-
-        # Returns boolean
-        b = can_get_admin_access()
-        if b:
-            results.append(
-                {
-                    'Function': 'Is user in the Administrators group',
-                    'Results': b
-                }
-            )
-
+    def get_local_account_info(self):
+        '''
+        Check local accounts hardening
+        '''
+        users = Users()
         return {
-            'Category': 'Check user admin',
-            'All': results
+            'category': 'Local Account',
+            'results': [
+                (
+                    'Is current user in the Administrators group', 
+                    self.bool_to_string(can_get_admin_access())
+                ), 
+                (
+                    'Current privileges', 
+                    self.tab_to_string(check_currrent_user_privilege())
+                ), 
+                (
+                    'Empty password found for local users', 
+                    self.tab_to_string(check_empty_passwords(users))
+                ),
+                (
+                    'PasswordReq is set to no for users', 
+                    self.tab_to_string(check_passwordreq_option(users))
+                )
+            ]
         }
 
-    def get_well_known_dll_injections(self, args):
-        """
+
+    def get_well_known_dll_injections(self):
+        '''
         This technique should not work on windows 10
-        """
+        '''
         # From msdn: https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
         # 6.0 => Windows Vista  /   Windows Server 2008
         # 6.1 => Windows 7      /   Windows Server 2008 R2
         # 6.2 => Windows 8      /   Windows Server 2012
-
-        results = []
+        results = [(None, None)]
         s = System()
-        version = s.get_os_version()
-        if version in ['6.0', '6.1', '6.2']:
-
-            # Return a tab of string
-            b = checks_writeable_directory_on_path_environment_variable()
-            if b:
-                results.append(
-                    {
-                        'Function': 'Writeable path on the path environment variable',
-                        'Results': b
-                    }
-                )
-
-                # Return a tab of dic
-                b = check_well_known_dll_injections(self.service)
-                if b:
-                    results.append(
-                        {
-                            'Function': 'Check if well known vulnerable services are present',
-                            'Results': b
-                        }
-                    )
+        if s.get_os_version() in ['6.0', '6.1', '6.2']:
+            results = [(
+                'Writeable path on the path environment variable', 
+                self.tab_to_string(checks_writeable_directory_on_path_environment_variable())
+            ),
+            (
+                'Presence of well known vulnerable services', 
+                self.tab_of_dict_to_string(check_well_known_dll_injections(self.service))
+            )]
 
         return {
-            'Category': 'Check well known dlls hijacking',
-            'All': results
+            'category': 'Well known dlls hijacking',
+            'results': results
         }
+
 
 def get_sofwares():
     checks = RunChecks()
     yield checks.get_installed_softwares()
 
 
-def check_all(cmd=None):
+def check_all():
     checks = RunChecks()
     found = False
 
@@ -298,32 +261,35 @@ def check_all(cmd=None):
         checks.get_startup_key_vuln,  # Startup keys checks
         checks.get_tasks_vulns,  # Taskschedulers checks
         checks.get_interesting_files,  # Interesting files checks
-        # checks.get_installed_softwares,           # Softwares checks
-        checks.is_user_an_admin,  # System if already admin (uac not bypassed yet)
+        # checks.get_installed_softwares, # Softwares checks
+        checks.get_local_account_info,  # System if already admin (uac not bypassed yet)
         checks.get_well_known_dll_injections,  # Well known windows services vulnerable to dll hijacking
     ]
 
     for c in to_checks:
         try:
-            results = c(cmd)
-            if results['All']:
-                found = True
-                yield results
+            results = c()
+            for desc, result in results.get('results'):
+                # Boolean has been changed to string so this check is needed
+                if result and result != 'False':
+                    found = True
+                    yield results
+                    break
         except Exception:
             yield {
-                'Category': 'Error on: %s' % str(c.__name__),
-                'All': str(traceback.format_exc())
+                'category': 'error on: %s' % str(c.__name__),
+                'error': traceback.format_exc()
             }
 
     if not found:
         yield {
-            'Category': 'No Luck',
-            'All': '\nNothing found !'
+            'category': 'No Luck',
+            'error': '\nNothing found !'
         }
 
 
-def run(cmd=None):
+def run():
     results = []
-    for r in check_all(cmd):
+    for r in check_all():
         results.append(r)
     return results
