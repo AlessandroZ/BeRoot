@@ -1,1 +1,1 @@
-impacket
+win32net
