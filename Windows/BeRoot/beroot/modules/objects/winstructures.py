@@ -9,6 +9,13 @@ except ImportError:
 
 from ..get_info.system_info import System
 
+
+DWORD = c_uint32
+LPVOID = c_void_p
+LONG = c_long
+
+INVALID_HANDLE_VALUE = c_void_p(-1).value
+
 HKEY_LOCAL_MACHINE = -2147483646
 HKEY_CURRENT_USER = -2147483647
 
@@ -53,6 +60,27 @@ SERVICE_STATE_ALL = 3
 
 ERROR_INSUFFICIENT_BUFFER = 122
 ERROR_MORE_DATA = 234
+
+SE_PRIVILEGE_ENABLED            = (0x00000002)
+
+STANDARD_RIGHTS_REQUIRED        = 0x000F0000L
+TOKEN_ASSIGN_PRIMARY            = 0x0001
+TOKEN_DUPLICATE                 = 0x0002
+TOKEN_IMPERSONATE               = 0x0004
+TOKEN_QUERY                     = 0x0008
+TOKEN_QUERY_SOURCE              = 0x0010
+TOKEN_ADJUST_PRIVILEGES         = 0x0020
+TOKEN_ADJUST_GROUPS             = 0x0040
+TOKEN_ADJUST_DEFAULT            = 0x0080
+TOKEN_ADJUST_SESSIONID          = 0x0100
+TOKEN_ALL_ACCESS                = (
+    STANDARD_RIGHTS_REQUIRED | TOKEN_ASSIGN_PRIMARY | \
+    TOKEN_DUPLICATE | TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE | \
+    TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT | \
+    TOKEN_ADJUST_SESSIONID)
+
+LOGON32_LOGON_INTERACTIVE = 2
+LOGON32_PROVIDER_DEFAULT = 0
 
 
 class SERVICE_STATUS(Structure):
@@ -111,7 +139,71 @@ class ServiceStatusEntry(object):
         self.WaitHint                = raw.ServiceStatus.dwWaitHint 
 
 
+class TOKEN_INFORMATION_CLASS:
+    #see http://msdn.microsoft.com/en-us/library/aa379626%28VS.85%29.aspx
+    TokenUser       = 1
+    TokenGroups     = 2
+    TokenPrivileges = 3
+
+class LUID(Structure):
+    _fields_ = [
+        ("LowPart",     DWORD),
+        ("HighPart",    LONG),
+    ]
+
+    def __eq__(self, other):
+        return (self.HighPart == other.HighPart and self.LowPart == other.LowPart)
+
+    def __ne__(self, other):
+        return not (self==other)
+
+class LUID_AND_ATTRIBUTES(Structure):
+    _fields_ = [
+        ("Luid",        LUID),
+        ("Attributes",  DWORD),
+    ]
+
+    def is_enabled(self):
+        return bool(self.Attributes & SE_PRIVILEGE_ENABLED)
+
+    def enable(self):
+        self.Attributes |= SE_PRIVILEGE_ENABLED
+
+    def get_name(self):
+        size = DWORD(10240)
+        buf = create_unicode_buffer(size.value)
+        res = LookupPrivilegeName(None, self.Luid, buf, size)
+
+        if res == 0:
+            raise WinError(GetLastError())
+
+        return buf[:size.value]
+
+    def __str__(self):
+        res = self.get_name()
+
+        if self.is_enabled():
+            res += ' (enabled)'
+
+        return res
+
+class TOKEN_PRIVS(Structure):
+    _fields_ = [
+        ("PrivilegeCount",  DWORD),
+        ("Privileges",      LUID_AND_ATTRIBUTES*0),
+    ]
+
+    def get_array(self):
+        array_type = LUID_AND_ATTRIBUTES*self.PrivilegeCount
+        privileges = cast(self.Privileges, POINTER(array_type)).contents
+        return privileges
+
+    def __iter__(self):
+        return iter(self.get_array())
+
+
 advapi32 = windll.advapi32
+kernel32 = WinDLL('kernel32', use_last_error=True)
 
 OpenSCManager = advapi32.OpenSCManagerA
 OpenSCManager.argtypes = [LPCTSTR, LPCTSTR, DWORD]
@@ -144,6 +236,34 @@ QueryServiceStatus.restype = BOOL
 QueryServiceConfig = advapi32.QueryServiceConfigA
 QueryServiceConfig.argtypes = [HANDLE, LPVOID, DWORD, LPDWORD]
 QueryServiceConfig.restype = BOOL
+
+OpenProcessToken = advapi32.OpenProcessToken
+OpenProcessToken.restype = BOOL
+OpenProcessToken.argtypes = [HANDLE, DWORD, POINTER(HANDLE)]
+
+GetTokenInformation = advapi32.GetTokenInformation
+GetTokenInformation.restype = BOOL
+GetTokenInformation.argtypes = [HANDLE, DWORD, LPVOID, DWORD, POINTER(DWORD)]
+
+LookupPrivilegeName = advapi32.LookupPrivilegeNameW
+LookupPrivilegeName.argtypes = [LPWSTR, POINTER(LUID), LPWSTR, POINTER(DWORD)]
+LookupPrivilegeName.restype = BOOL
+
+GetCurrentProcess = kernel32.GetCurrentProcess
+GetCurrentProcess.restype = HANDLE
+GetCurrentProcess.argtypes = []
+
+CloseHandle = kernel32.CloseHandle
+CloseHandle.restype = BOOL
+CloseHandle.argtypes = [HANDLE]
+
+LogonUser = advapi32.LogonUserA
+LogonUser.argtypes = [LPCSTR, LPCSTR, LPCSTR, DWORD, DWORD, POINTER(HANDLE)]
+LogonUser.restype = BOOL
+
+GetUserNameW  = advapi32.GetUserNameW
+GetUserNameW.argtypes = [LPWSTR, POINTER(DWORD)]
+GetUserNameW.restype = BOOL
 
 s = System()
 
@@ -183,3 +303,81 @@ def EnumServicesStatus(hSCManager, dwServiceType=SERVICE_DRIVER | SERVICE_WIN32,
                 raise WinError() 
 
         return Services 
+
+
+def get_process_token():
+    """
+    Get the current process token
+    """
+    token = HANDLE()
+    if not OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, token):
+        raise WinError(GetLastError())
+
+    return token
+
+
+def get_currents_privs():
+    '''
+    Get all privileges associated with the current process.
+    '''
+    dwSize = DWORD()
+    hToken = get_process_token()
+
+    try:
+        if not GetTokenInformation(
+            hToken, TOKEN_INFORMATION_CLASS.TokenPrivileges, None, 0, byref(dwSize)):
+
+            error = GetLastError()
+            # print error
+            if error != ERROR_INSUFFICIENT_BUFFER:
+                raise WinError(error)
+
+        cBuffer = create_string_buffer(dwSize.value)
+        if not GetTokenInformation(
+            hToken, TOKEN_INFORMATION_CLASS.TokenPrivileges,
+            cBuffer, dwSize.value, byref(dwSize)):
+            raise WinError(GetLastError())
+
+    finally:
+        CloseHandle(hToken)
+
+    privs = tuple(
+        (x.get_name(), x.is_enabled()) for x in cast(
+            cBuffer, POINTER(TOKEN_PRIVS)).contents
+    )
+
+    return privs
+
+
+def GetUserName():
+    nSize = DWORD(0)
+    GetUserNameW(None, byref(nSize))
+    error = GetLastError()
+
+    if error and error != ERROR_INSUFFICIENT_BUFFER:
+        raise WinError(error)
+
+    lpBuffer = create_unicode_buffer(u'', nSize.value + 1)
+
+    if not GetUserNameW(lpBuffer, byref(nSize)):
+        raise WinError(get_last_error())
+
+    return lpBuffer.value
+
+
+def to_unicode(x):
+    tx = type(x)
+    if tx == str:
+        return x.decode(sys.getfilesystemencoding())
+    elif tx == unicode:
+        return x
+    else:
+        return str(x)
+
+
+def try_empty_login(username):
+    hToken = HANDLE(INVALID_HANDLE_VALUE)
+    logged_on = LogonUser(username, "", None, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, byref(hToken))
+    if logged_on or GetLastError() == 1327:
+        return True
+    return False
