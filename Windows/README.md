@@ -206,15 +206,15 @@ Beroot lists all privileges we have and highlight if we have one of these tokens
 __How to exploit__: Everything is well explained on __Andrea Pierini__'s [pdf](https://github.com/AlessandroZ/BeRoot/blob/master/Windows/templates/RomHack%202018%20-%20Andrea%20Pierini%20-%20whoami%20priv%20-%20show%20me%20your%20Windows%20privileges%20and%20I%20will%20lead%20you%20to%20SYSTEM.pdf). 
 
 
-Local account with empty passwords
+Local account with's empty password
 ----
 
-All local accounts are tested to detect empty passwords. 
+All local accounts are tested to detect empty password. 
 
 Local account with passwordreq:no
 ----
 
-Idea come from 0xRick [write up](https://0xrick.github.io/hack-the-box/access/).
+Idea comes from 0xRick [write up](https://0xrick.github.io/hack-the-box/access/).
 
 Checking for user account options, we could see this kind of output: 
 
