@@ -22,7 +22,10 @@ class SudoList(object):
 
     def __init__(self, password='test'):
         self.sudo_cmd = 'echo "{password}" | sudo -S -ll'.format(password=password)
-        self.sudo_dirty_check = 'echo "{password}" | sudo -S -i'.format(password=password)
+        self.sudo_dirty_check = [
+            'echo "{password}" | sudo -S -i'.format(password=password),
+            'sudo -i'
+        ]
         self.users = Users()
         self.all_rules = []
         self.ld_preload = False
@@ -42,8 +45,9 @@ class SudoList(object):
                 return out
 
     def dirty_check(self):
-        if self.run_cmd(self.sudo_dirty_check, is_ok=True): 
-            return 'sudo -i possible !' 
+        for cmd in self.sudo_dirty_check:
+            if self.run_cmd(cmd, is_ok=True):
+                return 'sudo -i possible !'
 
     def _get_user(self, user):
         """
