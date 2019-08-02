@@ -214,7 +214,7 @@ All local accounts are tested to detect empty password.
 Local account with passwordreq:no
 ----
 
-Idea comes from 0xRick [write up](https://0xrick.github.io/hack-the-box/access/).
+Idea comes from 0xRick 's [write up](https://0xrick.github.io/hack-the-box/access/).
 
 Checking for user account options, we could see this kind of output: 
 
