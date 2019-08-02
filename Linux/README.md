@@ -279,8 +279,18 @@ Ptrace Scope
 ----
 
 If ptrace is fully enabled (e.g. `/proc/sys/kernel/yama/ptrace_scope == 0`), it will be possible to read processes memory. 
-If it's enabled, check [sudo_inject](https://github.com/nongiach/sudo_inject) projects or inject some processes using libs like [memorpy](https://github.com/n1nj4sec/memorpy/).
+If it's enabled, check [sudo_inject](https://github.com/nongiach/sudo_inject) project or inject some processes using libs like [memorpy](https://github.com/n1nj4sec/memorpy/).
 
+From the [documentation](https://www.kernel.org/doc/html/v4.14/admin-guide/LSM/Yama.html), the value of ptrace_scope represent: 
+```
+0 - classic ptrace permissions: a process can PTRACE_ATTACH to any other process running under the same uid, as long as it is dumpable (i.e. did not transition uids, start privileged, or have called prctl(PR_SET_DUMPABLE...) already). Similarly, PTRACE_TRACEME is unchanged.
+
+1 - restricted ptrace: a process must have a predefined relationship with the inferior it wants to call PTRACE_ATTACH on. By default, this relationship is that of only its descendants when the above classic criteria is also met. To change the relationship, an inferior can call prctl(PR_SET_PTRACER, debugger, ...) to declare an allowed debugger PID to call PTRACE_ATTACH on the inferior. Using PTRACE_TRACEME is unchanged.
+
+2 - admin-only attach: only processes with CAP_SYS_PTRACE may use ptrace with PTRACE_ATTACH, or through children calling PTRACE_TRACEME.
+
+3 - no attach: no processes may use ptrace with PTRACE_ATTACH nor via PTRACE_TRACEME. Once set, this sysctl value cannot be changed.
+```
 
 Exploit
 ----
