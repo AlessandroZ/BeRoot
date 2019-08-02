@@ -28,4 +28,4 @@ if __name__ == '__main__':
     check_all(arguments.password)
 
     elapsed_time = time.time() - start_time
-    print('Elapsed time = %s' % elapsed_time)
+    print('\nElapsed time = %s' % elapsed_time)

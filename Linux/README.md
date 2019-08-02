@@ -275,6 +275,13 @@ If `/sbin/getcap` is present on the filesystem, capabilities on all binaries loc
 This idea comes from 0xrick's [write up](https://0xrick.github.io/hack-the-box/waldo/).
 
 
+Ptrace Scope
+----
+
+If ptrace is fully enabled (e.g. `/proc/sys/kernel/yama/ptrace_scope == 0`), it will be possible to read processes memory. 
+If it's enabled, check [sudo_inject](https://github.com/nongiach/sudo_inject) projects or inject some processes using libs like [memorpy](https://github.com/n1nj4sec/memorpy/).
+
+
 Exploit
 ----
 

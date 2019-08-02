@@ -10,7 +10,7 @@ from .modules.sudo.sudo_list import SudoList
 from .modules.useful.useful import tab_of_dict_to_string, tab_to_string
 from .checks.checks import (
     check_sudoers_misconfigurations, is_docker_installed, check_nfs_root_squashing,
-    get_capabilities, get_exploits, check_python_library_hijacking
+    get_capabilities, get_exploits, check_python_library_hijacking, get_ptrace_scope
 )
 
 
@@ -130,6 +130,15 @@ class RunChecks(object):
             tab_to_string(check_python_library_hijacking(self.current_user)),
         )
 
+    def ptrace_scope(self):
+        """
+        Check ptrace scope stored in /proc/sys/kernel/yama/ptrace_scope
+        """
+        return (
+            'Ptrace Scope',
+            get_ptrace_scope()
+        )
+
     def exploits(self):
         """
         Run Linux exploit suggester
@@ -162,18 +171,19 @@ def check_all(password):
 
     checks = RunChecks(password)
     to_checks = [
-        checks.file_permissions,
-        checks.services_files_permissions,
-        checks.suid_bins,
-        checks.sudoers_misconfiguration,
-        checks.sudo_list,
-        checks.sudo_dirty_check,
-        checks.docker_installed,
-        checks.nfs_root_squashing,
-        checks.ldpreload,
-        checks.capabilities,
-        checks.exploits,
-        checks.python_library_hijacking,
+        # checks.file_permissions,
+        # checks.services_files_permissions,
+        # checks.suid_bins,
+        # checks.sudoers_misconfiguration,
+        # checks.sudo_list,
+        # checks.sudo_dirty_check,
+        # checks.docker_installed,
+        # checks.nfs_root_squashing,
+        # checks.ldpreload,
+        # checks.capabilities,
+        checks.ptrace_scope,
+        # checks.exploits,
+        # checks.python_library_hijacking,
     ]
 
     for c in to_checks:

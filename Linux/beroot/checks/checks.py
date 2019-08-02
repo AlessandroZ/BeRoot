@@ -81,6 +81,18 @@ def check_python_library_hijacking(user):
     return lib_path
 
 
+def get_ptrace_scope():
+    try:
+        with open('/proc/sys/kernel/yama/ptrace_scope', 'rb') as f:
+            ptrace_scope = int(f.read().strip())
+
+        if ptrace_scope == 0:
+            return 'PTRACE_ATTACH possible ! (yama/ptrace_scope == 0)'
+
+    except IOError:
+        pass
+
+
 def check_sudoers_misconfigurations(file_info, services, suids, user, rules, already_impersonated=[], result=''):
     """
     Recursive function to analyse sudoers rules
