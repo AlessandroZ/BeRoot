@@ -1,137 +1,116 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import getpass
 import os
-import subprocess
+import sys
 
-from beroot.analyse.binaries import Binaries
-from beroot.checks.exploit import Exploit  
-from beroot.checks.sudo_list import SudoList
-from beroot.conf.files import FileManager
-from beroot.conf.users import Users
+from ..modules.exploit import Exploit
+from ..modules.files.files import File
+from ..modules.sudo.sudo import Sudo
+from ..modules.useful.useful import tab_of_dict_to_string, tab_to_string, run_cmd
 
 
-class Checks:
+def is_docker_installed():
     """
-    Retrieve configuration information
-    This class does not analyse any information retrieved
+    Check if docker service is present
     """
+    return "/etc/init.d/docker found" if os.path.exists('/etc/init.d/docker') else False
 
-    def __init__(self):
-        self.interesting_bin = Binaries()
-        self.exploit = Exploit()
-        self.users = Users()
 
-    def get_possible_exploit(self):
-        """
-        Execute linux exploit suggester on the system
-        """
-        return 'exploit', self.exploit.run()
+def check_nfs_root_squashing():
+    """
+    Parse nfs configuration /etc/exports to find no_root_squash directive
+    """
+    path = '/etc/exports'
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                for line in f.readlines():
+                    if line.startswith('#'):
+                        continue
 
-    def check_suid_bin(self):
-        """
-        List all suid binaries
-        Using find is much faster than using python to loop through all files looking for suid binaries
-        """
-        # For GUID => find / -perm -g=s -type f 2>/dev/null
+                    if 'no_root_squash' in line.decode():
+                        return 'no_root_squash directive found'
+        except Exception:
+            pass
 
-        cmd = 'find / -perm -u=s -type f 2>/dev/null'
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = process.communicate()
-        suid = []
+    return False
 
-        for file in out.strip().decode().split('\n'):
-            fm = FileManager(file)
-            suid.append(fm)
 
-        return 'suid_bin', suid
+def get_capabilities():
+    """
+    List capabilities found on binaries stored on /sbin/
+    """
+    bins = []
+    getcap = '/sbin/getcap'
+    if os.path.exists(getcap):
+        for path in ['/usr/bin/', '/usr/sbin/']:
+            cmd = '{getcap} -r -v {path} | grep "="'.format(getcap=getcap, path=path)
+            output, err = run_cmd(cmd)
+            if output:
+                for line in output.split('\n'):
+                    if line.strip():
+                        binary, capabilities = line.strip().split('=')
+                        bins.append('%s: %s' % (binary, capabilities))
 
-    def check_files_permissions(self):
-        """
-        Check access on write permissions on sensitive files.
-        """
-        result = []
-        interesting_files = [
-            # directories
-            '/etc/init.d'
-            '/etc/cron.d',
-            '/etc/cron.daily',
-            '/etc/cron.hourly',
-            '/etc/cron.monthly',
-            '/etc/cron.weekly',
+    if bins: 
+        return tab_to_string(bins)
 
-            # files
-            '/etc/sudoers',
-            '/etc/exports',
-            '/etc/at.allow',
-            '/etc/at.deny',
-            '/etc/crontab',
-            '/etc/cron.allow',
-            '/etc/cron.deny',
-            '/etc/anacrontab',
-            '/var/spool/cron/crontabs/root',
-        ]
+    return False
 
-        for path in interesting_files:
-            if os.path.isdir(path):
-                for root, dirs, files in os.walk(path):
-                    for file in files:
-                        fullpath = os.path.join(root, file)
-                        fm = FileManager(fullpath, check_inside=True)
-                        result.append(fm)
-            else:
-                fm = FileManager(path, check_inside=True)
-                result.append(fm)
 
-        return 'files_permissions', result
+def get_exploits():
+    """
+    Run linux exploit suggester tool
+    """
+    exploit = Exploit()
+    output, err = run_cmd(exploit.code)
+    if output.strip():
+        return output
 
-    def check_sudo_rules(self):
-        """
-        Check sudoers file - /etc/sudoers
-        If not possible (permission denied), try using sudo -l
-        """
-        result = ([], False)
-        sfile = '/etc/sudoers'
-        fm = FileManager(sfile)
 
-        if fm.file.is_readable:
-            result = fm.parse_sudoers(sfile)
-        else:
-            result = SudoList().parse()
-        
-        return 'sudo_rules', result
+def check_python_library_hijacking(user):
+    lib_path = []
 
-    def check_nfs_root_squashing(self):
-        """
-        Check NFS Root Squashing - /etc/exports
-        """
-        result = []
-        sfile = '/etc/exports'
-        fm = FileManager(sfile)
+    # Do not check current directory (it would be writable and no privilege escalation could be done)
+    for path in sys.path[1:]:
+        if getpass.getuser() not in path:
+            f = File(path)
+            if f.is_writable(user): 
+                lib_path.append(path)
+    return lib_path
 
-        if fm.file.is_readable:
-            result = fm.parse_nfs_conf(sfile)
 
-        return 'nfs_root_squashing', {'file': fm, 'result': result}
+def check_sudoers_misconfigurations(file_info, services, suids, user, rules, already_impersonated=[], result=''):
+    """
+    Recursive function to analyse sudoers rules
+    If a user could impersonate other users others paths using these users are checked
+    file_info, services and suids are class to performs checks if user are impersonated
+    """
+    if rules:
 
-    def is_docker_installed(self):
-        """
-        Check if docker service is present
-        """
-        module = 'docker'
-        return (module, True) if os.path.exists('/etc/init.d/docker') else (module, False)
+        sudo = Sudo(user)
+        paths_found = sudo.anaylyse_sudo_rules(rules)
+        if paths_found:
+            result += '### Rules for {user} ###\n\n'.format(user=user.pw_name)
+            result += tab_of_dict_to_string(paths_found, new_line=False)
 
-    def run(self):
-        """
-        Run all functions to retrieve system misconfiguration
-        """
-        checks = [
-            self.check_files_permissions,
-            self.check_suid_bin,
-            self.check_nfs_root_squashing,
-            self.is_docker_installed,
-            self.check_sudo_rules,
-            self.get_possible_exploit,
-        ]
+            # If this tab is not empty means that we are impersonating another user
+            if already_impersonated:
+                # Check for other misconfiguration path
+                result += tab_of_dict_to_string(file_info.write_access_on_files(user))
+                result += tab_of_dict_to_string(services.write_access_on_binpath(user))
+                result += tab_of_dict_to_string(suids.check_suid_bins(
+                    user),
+                    new_line=False,
+                    title=False,
+                )
+                result += tab_to_string(check_python_library_hijacking(user)),
 
-        for check in checks:
-            yield check()
+            # Use recursively to realize same checks for impersonated users
+            for impersonate in sudo.can_impersonate:
+                if impersonate not in already_impersonated:
+                    already_impersonated.append(impersonate)
+                    result += check_sudoers_misconfigurations(impersonate, rules, already_impersonated, result)
+
+    return result

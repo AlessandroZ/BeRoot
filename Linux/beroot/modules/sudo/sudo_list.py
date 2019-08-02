@@ -1,6 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os
-import pwd
 import random
 import re
 import string
@@ -9,18 +10,22 @@ import traceback
 
 from subprocess import Popen, PIPE
 
-from beroot.conf.files import PathInFile, FileManager
-from beroot.conf.users import Users
+from ..files.file_manager import FileManager
+from ..files.path_in_file import PathInFile
+from ..users import Users
 
 
-class SudoList:
+class SudoList(object):
     """
-    Get sudo rules from sudo -l
+    Get rules and parse output from sudo -ll output
     """
-    def __init__(self):
-        self.sudoers_pattern = re.compile(r"(\( ?(?P<runas>.*) ?\)) ?(?P<directives>(\w+: ?)*)(?P<cmds>.*)")
+
+    def __init__(self, password='test'):
+        self.sudo_cmd = 'echo "{password}" | sudo -S -ll'.format(password=password)
+        self.sudo_dirty_check = 'echo "{password}" | sudo -S -i'.format(password=password)
+        self.users = Users()
         self.all_rules = []
-        self.sudo_cmd = 'echo "test" | sudo -S -ll'
+        self.ld_preload = False
 
     def run_cmd(self, cmd, is_ok=False):
         """
@@ -36,18 +41,49 @@ class SudoList:
             else:
                 return out
 
-    def parse_sudo_list(self, sudo_list):
+    def dirty_check(self):
+        if self.run_cmd(self.sudo_dirty_check, is_ok=True): 
+            return 'sudo -i possible !' 
+
+    def _get_user(self, user):
         """
-        Parse output from sudo -ll
+        Find a user pw object from his name
+        - user is a string
+        - u is an object
+        """
+        for u in self.users.list:
+            if u.pw_name == user:
+                return u
+        return False
+
+    def rules_from_sudo_ll(self):
+        """
+        Main function to retrieve sudoers rules from sudo -ll output
+        """
+        sudo_list = self.run_cmd(self.sudo_cmd)
+        if sudo_list:
+            sudo_rules = self._parse_sudo_list(sudo_list)
+            self._impersonate_mechanism(self.users.current.pw_name, sudo_rules, users_chain=[])
+
+        return self.all_rules
+
+    def _parse_sudo_list(self, sudo_list):
+        """
+        Parse sudo -ll output
         """
         sudoers_info = []
         fm = FileManager('')
+        
+        if 'LD_PRELOAD' in sudo_list:
+            self.ld_preload = True
+
         user = sudo_list[sudo_list.index('User '):].split(' ')[1]
         sudoers_entries = sudo_list.lower().split('sudoers entry')
         for sudo_rule in sudoers_entries:
 
             if not sudo_rule.startswith(':'):
                 continue
+
             pattern = re.compile(
                 r"\s*" +
                 "runasusers:\s*(?P<runasusers>\w*)" +
@@ -76,7 +112,7 @@ class SudoList:
         self.all_rules += sudoers_info
         return sudoers_info
 
-    def get_user_to_impersonate(self, sudo_rules):
+    def _get_user_to_impersonate(self, sudo_rules):
         """
         Check if in the sudo rule, user impersonation is possible (using su bin)
         """
@@ -85,14 +121,15 @@ class SudoList:
             for cmd in rules['cmds']:
                 for c in cmd.paths:
                     if c.basename == 'su':
-                        u = cmd.line.strip()[cmd.line.strip().index(c.basename) + len(c.basename):].strip()
-                        if u.strip() == '*':
-                            users = [u.pw_name for u in pwd.getpwall() if u.pw_uid != os.getuid()]
-                        else:
-                            users.append(u)
+                        # Do not perform further checks as it's already to impersonate root user
+                        args = cmd.line.strip()[cmd.line.strip().index(c.basename) + len(c.basename):].strip()
+                        if args.strip() and args.strip() not in ['root', '*']:
+                            u = self._get_user(args.strip())
+                            if u:
+                                users.append(u)
         return users
 
-    def impersonate_user(self, users_chain=[]):
+    def _impersonate_user(self, users_chain=[]):
         """
         Get the user to impersonate and return his sudo -l output
 
@@ -112,7 +149,6 @@ class SudoList:
         data = ''
         for u in users_chain:
             data += "sudo su {user} << 'EOF'\n".format(user=u)
-
         data += self.sudo_cmd + '\n'
         
         if users_chain: 
@@ -123,7 +159,6 @@ class SudoList:
         with open(path, 'w') as file:
             file.write(data)
 
-        out = None
         if os.path.exists(path):
             out = self.run_cmd(cmd='chmod +x {path}'.format(path=path), is_ok=True)
             if out:
@@ -131,32 +166,20 @@ class SudoList:
             os.remove(path)
             return out
 
-    def impersonate_mechanism(self, user, sudo_rules, users_chain=[], already_impersonated=[]):
+    def _impersonate_mechanism(self, user, sudo_rules, users_chain=[], already_impersonated=[]):
         """
         Recursive function to retrieve all sudo rules
         All rules for all possible users are stored on "all_rules"
         """
-        users_to_imp = self.get_user_to_impersonate(sudo_rules)
-        if not users_to_imp:
-            return ''
-
-        for u in users_to_imp:
+        for u in self._get_user_to_impersonate(sudo_rules):
             if u not in already_impersonated:
-                sudo_list = self.impersonate_user(users_chain=[user, u])
+                sudo_list = self._impersonate_user(users_chain=[user, u])
                 if sudo_list:
                     try:
-                        sudo_rules = self.parse_sudo_list(sudo_list)
-                        self.impersonate_mechanism(u, sudo_rules, [user, u], already_impersonated)
+                        sudo_rules = self._parse_sudo_list(sudo_list)
+                        self._impersonate_mechanism(u, sudo_rules, [user, u], already_impersonated)
                     except Exception:
                         print(traceback.format_exc())
                         continue
 
                     already_impersonated.append(u)
-
-    def parse(self):
-        sudo_list = self.run_cmd(self.sudo_cmd)
-        if sudo_list:
-            sudo_rules = self.parse_sudo_list(sudo_list)
-            current_user = Users().current.pw_name
-            self.impersonate_mechanism(current_user, sudo_rules, users_chain=[])
-        return self.all_rules, False

@@ -20,7 +20,7 @@ for file in os.listdir(root):
         with open(os.path.join(root, file), 'r') as stream:
             binary = os.path.splitext(file)[0]
             results[binary] = {}
-            gtfo_bins = yaml.load_all(stream)
+            gtfo_bins = yaml.load_all(stream, Loader=yaml.SafeLoader)
             for gtfo_bin in gtfo_bins:
                 if gtfo_bin:
                     functions = gtfo_bin['functions']

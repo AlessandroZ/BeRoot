@@ -2,8 +2,13 @@
 
 BeRoot is a post exploitation tool to check common misconfigurations on Linux and Mac OS to find a way to escalate our privilege. 
 
-To understand privilege escalation on these systems, you should understand at least two main notions: GTFOBins and Wildcards. \
-This Readme explains all technics implemented by BeRoot to better understand how to exploit it. 
+I recommend reading all the README to understand all checks performed by Beroot. \
+If you have the user password, specify it as argument, you could get more results. 
+
+```
+python beroot.py --password super_strong_password
+```
+
 
 GTFOBins
 ----
@@ -85,6 +90,8 @@ Lots of file are run with high permissions on the system (e.g cron files, servic
 /etc/cron.weekly
 /etc/sudoers
 /etc/exports
+/etc/passwd
+/etc/shadow
 /etc/at.allow
 /etc/at.deny
 /etc/crontab
@@ -94,10 +101,16 @@ Lots of file are run with high permissions on the system (e.g cron files, servic
 /var/spool/cron/crontabs/root
 ```
 
+For example, if we have write permission on `/etc/passwd` we could get root. Tips from [here](https://twitter.com/nemesis09/status/1136263868177616896)
+```
+echo zapata::0:0:New user:/root:/bin/bash >> /etc/passwd
+su zapata
+```
+
 Here are the tests done by BeRoot: 
 * checks if you have access with write permission on these files. 
 * checks inside the file, to find other paths with write permissions. 
-* checks for wildcards (this check could raise false positives, but could also get you useful information). Sometimes, you may need write permissions on a specific folder to create your malicious file (as explained on the wildcard section), this check is not done because it could be done by two many ways on the script and it's difficult to automate.
+* if files are executables or scripts, root directory are checked to detect if we have write access on it (useful for library hijacking, etc.)/
 
 
 Suid binaries
@@ -190,9 +203,7 @@ So BeRoot will analyse all rules:
 * if it affects our user or our user's group: 
 	* check if we have write permissions on all possible commands (in our example, it will test "service", "iptables", "python" and "/tmp/files.py")
 	* check for GTFOBins
-	* check for GTFOBins + wildcards 
 	* check if we can impersonate another user ("su" command)
-		* check write permissions on sensitive files and suid bin for this user
 		* realize again all these checks on the sudoers file using this new user
 
 Sudo list
@@ -218,13 +229,53 @@ Why is it possible ? On the [documentation](https://www.sudo.ws/man/1.8.17/sudoe
 However, these rules only affect the current user, so if user impersonation is possible (using su) `sudo -l` should be launched from this user as well. \
 BeRoot collects all these rules from all possible user an realize exaclty the same tests as listed perviously (e.g sudoers file method).
 
+Be careful ! If the user does not have the directive `NOPASSWD` in one of his rules, we cannot list sudo rules without his user password. 
+
+```
+$ su -l 
+Password: 
+```
+
+In this case, specify the user password to Beroot. 
+
+```
+python beroot.py --password super_strong_password
+```
+
+Python Library Hijacking
+----
+If any of these search paths are world writable, it will impose a risk of privilege escalation, as placing a file in one of these directories with a name that matches the requested library will load that file, assuming it's the first occurrence.
+
+```
+Directory of the script being executed
+/usr/lib/python2.7
+/usr/lib/python2.7/plat-x86_64-linux-gnu
+/usr/lib/python2.7/lib-tk
+/usr/lib/python2.7/lib-old
+/usr/lib/python2.7/lib-dynload
+/usr/local/lib/python2.7/dist-packages
+/usr/lib/python2.7/dist-packages
+```
+
+These path could be found running: 
+```
+python -c 'import sys; print "\n".join(sys.path)'
+```
+
+More information can be found [here](https://rastating.github.io/privilege-escalation-via-python-library-hijacking/).
+
+
+Capabilities
+----
+
+On some system, instead of adding sudo right on a binary, administrator add capabilities on it.
+
+If `/sbin/getcap` is present on the filesystem, capabilities on all binaries located on `/usr/bin/` or `/usr/sbin/` are listed. Depending on the capability assigned, some privilege actions could be done. 
+
+This idea comes from 0xrick's [write up](https://0xrick.github.io/hack-the-box/waldo/).
+
+
 Exploit
 ----
 
 Because lots of server are vulnerable to well known exploit (dirtycow, etc.), I have embeeded [linux-exploit-suggester](https://github.com/mzet-/linux-exploit-suggester) to give an overview of potential CVE that affect the kernel (this module will only work for Linux systems). 
-
-
-----
-| __Alessandro ZANNI__    |
-| ------------- |
-| __zanni.alessandro@gmail.com__  |

@@ -9,7 +9,6 @@ class Users:
     """
     Get users list with uid and gid
     """
-
     def __init__(self):
         self.list = pwd.getpwall()
         self.current = [p for p in self.list if p.pw_uid == os.getuid()][0]
