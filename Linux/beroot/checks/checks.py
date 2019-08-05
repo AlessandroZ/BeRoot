@@ -63,10 +63,11 @@ def get_exploits():
     """
     Run linux exploit suggester tool
     """
-    exploit = Exploit()
-    output, err = run_cmd(exploit.code)
-    if output.strip():
-        return output
+    if 'linux' in sys.platform:
+        exploit = Exploit()
+        output, err = run_cmd(exploit.code)
+        if output.strip():
+            return output
 
 
 def check_python_library_hijacking(user):

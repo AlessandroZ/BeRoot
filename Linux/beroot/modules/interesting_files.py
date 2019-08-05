@@ -19,6 +19,9 @@ class InterestingFiles(object):
             '/etc/cron.hourly',
             '/etc/cron.monthly',
             '/etc/cron.weekly',
+            '/usr/lib',
+            '/lib',
+            '/etc/ld.so.conf',
 
             # files
             '/etc/sudoers',

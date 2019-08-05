@@ -99,6 +99,9 @@ Lots of file are run with high permissions on the system (e.g cron files, servic
 /etc/cron.deny
 /etc/anacrontab
 /var/spool/cron/crontabs/root
+/usr/lib
+/lib
+/etc/ld.so.conf
 ```
 
 For example, if we have write permission on `/etc/passwd` we could get root. Tips from [here](https://twitter.com/nemesis09/status/1136263868177616896)
@@ -107,11 +110,19 @@ echo zapata::0:0:New user:/root:/bin/bash >> /etc/passwd
 su zapata
 ```
 
+[Here](https://www.boiteaklou.fr/Abusing-Shared-Libraries.html) are another example if a writable file is found on `/etc/ld.so.conf` which could lead to hijack dlls. 
+
 Here are the tests done by BeRoot: 
 * checks if you have access with write permission on these files. 
 * checks inside the file, to find other paths with write permissions. 
 * if files are executables or scripts, root directory are checked to detect if we have write access on it (useful for library hijacking, etc.)/
 
+Services
+----
+
+Services are listed using dbus. If `python-dbus` is not present on the remote host, no services are checked (except those found on /etc/init.d/). However, you should not have this error using [Pupy](https://github.com/n1nj4sec/pupy/) because this lib is remotely loaded on the remote system. 
+
+Binpath and root directories are checked to see if there are write access.
 
 Suid binaries
 ----
@@ -232,7 +243,7 @@ BeRoot collects all these rules from all possible user an realize exaclty the sa
 Be careful ! If the user does not have the directive `NOPASSWD` in one of his rules, we cannot list sudo rules without his user password. 
 
 ```
-$ su -l 
+$ sudo -l 
 Password: 
 ```
 
@@ -268,7 +279,7 @@ More information can be found [here](https://rastating.github.io/privilege-escal
 Capabilities
 ----
 
-On some system, instead of adding sudo right on a binary, administrator add capabilities on it.
+On some system, instead of adding suid right on a binary, administrator add capabilities on it.
 
 If `/sbin/getcap` is present on the filesystem, capabilities on all binaries located on `/usr/bin/` or `/usr/sbin/` are listed. Depending on the capability assigned, some privilege actions could be done. 
 

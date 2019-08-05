@@ -20,7 +20,4 @@ Enjoy ;)
 Interesting projects
 ----
 * [Windows / Linux Local Privilege Escalation Workshop](https://github.com/sagishahar/lpeworkshop)
-* [Linux tools](https://github.com/rmusser01/Infosec_Reference/blob/master/Draft/Privilege%20Escalation%20%26%20Post-Exploitation.md#linpriv)
-* [Windows tools](https://github.com/rmusser01/Infosec_Reference/blob/master/Draft/Privilege%20Escalation%20%26%20Post-Exploitation.md#privescwin)
-
 
