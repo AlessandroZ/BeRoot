@@ -171,19 +171,19 @@ def check_all(password):
 
     checks = RunChecks(password)
     to_checks = [
-        # checks.file_permissions,
-        # checks.services_files_permissions,
-        # checks.suid_bins,
-        # checks.sudoers_misconfiguration,
-        # checks.sudo_list,
-        # checks.sudo_dirty_check,
-        # checks.docker_installed,
-        # checks.nfs_root_squashing,
-        # checks.ldpreload,
-        # checks.capabilities,
+        checks.file_permissions,
+        checks.services_files_permissions,
+        checks.suid_bins,
+        checks.sudoers_misconfiguration,
+        checks.sudo_list,
+        checks.sudo_dirty_check,
+        checks.docker_installed,
+        checks.nfs_root_squashing,
+        checks.ldpreload,
+        checks.capabilities,
         checks.ptrace_scope,
-        # checks.exploits,
-        # checks.python_library_hijacking,
+        checks.exploits,
+        checks.python_library_hijacking,
     ]
 
     for c in to_checks:
