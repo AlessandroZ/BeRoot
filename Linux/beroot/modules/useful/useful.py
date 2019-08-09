@@ -45,10 +45,18 @@ def bool_to_string(value):
     return str(value)
 
 
-def run_cmd(cmd):
+def run_cmd(cmd, is_ok=False):
     """
     Run cmd
     """
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, executable='/bin/bash')
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+                         shell=True, executable='/bin/bash')
+
     output, err = p.communicate()
+    if is_ok:
+        if p.returncode == 0:
+            return True
+        else:
+            return False
+
     return output, err
