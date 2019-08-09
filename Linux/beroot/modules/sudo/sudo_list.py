@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 import os
 import random
 import re
@@ -8,11 +7,10 @@ import string
 import tempfile
 import traceback
 
-from subprocess import Popen, PIPE
-
 from ..files.file_manager import FileManager
 from ..files.path_in_file import PathInFile
 from ..users import Users
+from ..useful.useful import run_cmd
 
 
 class SudoList(object):
@@ -24,29 +22,15 @@ class SudoList(object):
         self.sudo_cmd = 'echo "{password}" | sudo -S -ll'.format(password=password)
         self.sudo_dirty_check = [
             'echo "{password}" | sudo -S -i'.format(password=password),
-            'sudo -i'
+            # 'sudo -i'
         ]
         self.users = Users()
         self.all_rules = []
         self.ld_preload = False
 
-    def run_cmd(self, cmd, is_ok=False):
-        """
-        If is_ok return True if success and not the output
-        """
-        p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
-        out, err = p.communicate()
-        if p.returncode:
-            return False
-        else:
-            if is_ok:
-                return True
-            else:
-                return out
-
     def dirty_check(self):
         for cmd in self.sudo_dirty_check:
-            if self.run_cmd(cmd, is_ok=True):
+            if run_cmd(cmd, is_ok=True):
                 return 'sudo -i possible !'
 
     def _get_user(self, user):
@@ -64,7 +48,7 @@ class SudoList(object):
         """
         Main function to retrieve sudoers rules from sudo -ll output
         """
-        sudo_list = self.run_cmd(self.sudo_cmd)
+        sudo_list, _ = run_cmd(self.sudo_cmd)
         if sudo_list:
             sudo_rules = self._parse_sudo_list(sudo_list)
             self._impersonate_mechanism(self.users.current.pw_name, sudo_rules, users_chain=[])
@@ -164,9 +148,9 @@ class SudoList(object):
             file.write(data)
 
         if os.path.exists(path):
-            out = self.run_cmd(cmd='chmod +x {path}'.format(path=path), is_ok=True)
+            out = run_cmd(cmd='chmod +x {path}'.format(path=path), is_ok=True)
             if out:
-                out = self.run_cmd(cmd=path)
+                out, _ = run_cmd(cmd=path)
             os.remove(path)
             return out
 
