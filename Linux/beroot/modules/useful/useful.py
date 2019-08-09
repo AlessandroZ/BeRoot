@@ -60,3 +60,4 @@ def run_cmd(cmd, is_ok=False):
             return False
 
     return output, err
+
