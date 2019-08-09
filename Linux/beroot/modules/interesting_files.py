@@ -19,8 +19,6 @@ class InterestingFiles(object):
             '/etc/cron.hourly',
             '/etc/cron.monthly',
             '/etc/cron.weekly',
-            '/usr/lib',
-            '/lib',
             '/etc/ld.so.conf',
 
             # files
@@ -36,6 +34,7 @@ class InterestingFiles(object):
             '/etc/anacrontab',
             '/var/spool/cron/crontabs/root',
         ]
+        print('Getting permissions of sensitive files. Could take some time...')
         self.properties = self._get_permissions(self.files)
 
     def _get_permissions(self, paths):
@@ -111,5 +110,13 @@ class InterestingFiles(object):
 
             if values: 
                 has_write_access.append(values)
+
+        # Check if /usr/lib and /lib are writable without looking inside (too long)
+        for directory in ['/usr/lib', '/lib']:
+            f = File(directory)
+            if f.is_writable(user):
+                has_write_access.append({
+                    'path': '%s [writable]' % directory
+                })
 
         return has_write_access
