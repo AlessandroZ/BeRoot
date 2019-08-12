@@ -340,3 +340,10 @@ Exploit
 ----
 
 Because lots of server are vulnerable to well known exploit (dirtycow, etc.), I have embeeded [linux-exploit-suggester](https://github.com/mzet-/linux-exploit-suggester) to give an overview of potential CVE that affect the kernel (this module will only work for Linux systems). 
+
+
+Monitoring
+----
+
+Monitoring could be useful to detect what's running on the system. Beroot does not that but it's possible to list some processes from other users, cron jobs, etc whithout needed root privileges. This could be done using [pspy](https://github.com/DominicBreuker/pspy).
+
