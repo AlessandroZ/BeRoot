@@ -3,7 +3,7 @@
 import argparse
 import time
 
-from beroot.run import check_all
+from beroot.run import run
 
 
 if __name__ == '__main__':
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     print(banner)
-    check_all(arguments.password)
+    run(arguments.password)
 
     elapsed_time = time.time() - start_time
     print('\nElapsed time = %s' % elapsed_time)

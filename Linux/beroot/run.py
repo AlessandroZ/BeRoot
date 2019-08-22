@@ -149,7 +149,7 @@ class RunChecks(object):
         )
 
 
-def print_output(output, to_print=False):
+def print_output(output, to_print):
     category, result = output
     st = ''
     if result:
@@ -161,7 +161,7 @@ def print_output(output, to_print=False):
     return st
 
 
-def check_all(password):
+def run(password, to_print=True):
     """
     Can be useful when called from other tools - as a package
     beroot.py is not needed anymore
@@ -189,6 +189,6 @@ def check_all(password):
     for c in to_checks:
         results = c()
 
-        total_found += print_output(results, to_print=True)
+        total_found += print_output(results, to_print=to_print)
 
     return total_found
