@@ -32,6 +32,7 @@ class InterestingFiles(object):
             '/etc/cron.allow',
             '/etc/cron.deny',
             '/etc/anacrontab',
+            '/etc/apache2/apache2.conf',
             '/var/spool/cron/crontabs/root',
         ]
         print('Getting permissions of sensitive files. Could take some time...')
