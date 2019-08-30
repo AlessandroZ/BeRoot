@@ -347,3 +347,9 @@ Monitoring
 
 Monitoring could be useful to detect what's running on the system. Beroot does not that but it's possible to list some processes from other users, cron jobs, etc whithout needed root privileges. This could be done using [pspy](https://github.com/DominicBreuker/pspy).
 
+
+Interesting write up 
+----
+
+* 0xRick [blog](https://0xrick.github.io/categories/)
+* Raj Chandel's [blog](https://github.com/Ignitetechnologies/Privilege-Escalation)
