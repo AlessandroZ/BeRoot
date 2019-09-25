@@ -9,7 +9,7 @@ This project works on Windows, Linux and Mac OS. You could find the Windows vers
 
 I recommend reading the README depending on the targeted OS, to better understand what's happening. 
 
-I tried to implement most technics described in this picture:
+I tried to implement most techniques described in this picture:
 
 <p align="center"><img src="https://user-images.githubusercontent.com/10668373/43284508-4f242070-911c-11e8-9b05-e0e9261ed3cb.jpeg" alt="BeRoot"></p>
 
