@@ -245,7 +245,7 @@ Some misconfigurations that could lead to privilege escalation are not checked b
 * When a privilege account access a non privilege file: http://offsec.provadys.com/intro-to-file-operation-abuse-on-Windows.html
 * Dll Hijacking
 * Outdated Windows (use [Watson](https://github.com/rasta-mouse/Watson) or [wesng](https://github.com/bitsadmin/wesng) and check on [github](https://github.com/SecWiki/windows-kernel-exploits) for exploits).
-
+* From Local/Network service account to admin. Check itm4n's [write up](https://itm4n.github.io/localservice-privileges/) and his [tool](https://github.com/itm4n/FullPowers) 
 
 Special thanks
 ----
