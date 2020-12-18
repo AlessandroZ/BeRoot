@@ -3,6 +3,8 @@
 import getpass
 import os
 import sys
+import subprocess
+
 
 from ..modules.exploit import Exploit
 from ..modules.files.files import File
@@ -48,7 +50,7 @@ def get_capabilities():
             cmd = '{getcap} -r -v {path} | grep "="'.format(getcap=getcap, path=path)
             output, err = run_cmd(cmd)
             if output:
-                for line in output.split('\n'):
+                for line in output.decode().split('\n'):
                     if line.strip():
                         binary, capabilities = line.strip().split('=')
                         bins.append('%s: %s' % (binary, capabilities))
@@ -67,8 +69,7 @@ def get_exploits():
         exploit = Exploit()
         output, err = run_cmd(exploit.code)
         if output.strip():
-            return output
-
+            return output.decode()
 
 def check_python_library_hijacking(user):
     lib_path = []
