@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 from .modules.users import Users
 from .modules.services import Services
 from .modules.suid import SuidBins
@@ -167,6 +168,7 @@ def run(password, to_print=True):
     beroot.py is not needed anymore
     This function returns all results found
     """
+
     total_found = ''
 
     checks = RunChecks(password)

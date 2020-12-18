@@ -80,7 +80,7 @@ class SuidBins:
         if out:
             cmd = 'strings %s' % binary
             out, _ = run_cmd(cmd)
-            for line in out.split('\n'):
+            for line in out.decode().split('\n'):
                 if line.startswith('/') and os.path.exists(line):
                     if not line.startswith((blacklist_path)):
                         f = File(line)
