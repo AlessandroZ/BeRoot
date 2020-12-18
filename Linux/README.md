@@ -1,4 +1,4 @@
-# BeRoot For Linux
+# BeRoot For Linux - Python 3 compatible
 
 BeRoot is a post exploitation tool to check common misconfigurations on Linux and Mac OS to find a way to escalate our privilege. 
 Current BeRoot linux version is now fully compatible with Python 3 and now uses latest version of linux-exploit-suggester.
