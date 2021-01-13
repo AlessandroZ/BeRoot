@@ -15,6 +15,12 @@ class Services(object):
         self.fm = FileManager()
         self.list = self._get_services_systemd()
 
+    def _unicode(self, u):
+        try:
+            return unicode(u)
+        except NameError: 
+            return u
+
     def _get_services_systemd(self):
         """
         Get list of services using dbus
@@ -47,8 +53,8 @@ class Services(object):
                 argv0, argv = exec_start[0], exec_start[1]
                 binpath = None
 
-                argv0 = unicode(argv0)
-                argv = [unicode(x) for x in argv]
+                argv0 = self._unicode(argv0)
+                argv = [self._unicode(x) for x in argv]
 
                 if os.path.basename(argv0) == os.path.basename(argv[0]):
                     binpath = argv0
@@ -59,13 +65,13 @@ class Services(object):
                     binpath += ' ' + ' '.join([x if ' ' not in x else repr(x) for x in argv[1:]])
 
                 objects.append({
-                    'name': unicode(unit),
-                    'display_name': unicode(description),
-                    'status': unicode(status),
+                    'name': self._unicode(unit),
+                    'display_name': self._unicode(description),
+                    'status': self._unicode(status),
                     'pid': int(properties.get('MainPID')) or None,
-                    'binpath': unicode(binpath),
+                    'binpath': self._unicode(binpath),
                     'files_object': self.fm.extract_paths_from_string(binpath),
-                    'username': unicode(properties.get('User'))
+                    'username': self._unicode(properties.get('User'))
                 })
         except Exception:
             print(traceback.format_exc())
