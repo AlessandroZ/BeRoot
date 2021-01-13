@@ -50,7 +50,7 @@ class SudoList(object):
         """
         sudo_list, _ = run_cmd(self.sudo_cmd)
         if sudo_list:
-            sudo_rules = self._parse_sudo_list(sudo_list)
+            sudo_rules = self._parse_sudo_list(sudo_list.decode())
             self._impersonate_mechanism(self.users.current.pw_name, sudo_rules, users_chain=[])
 
         return self.all_rules
