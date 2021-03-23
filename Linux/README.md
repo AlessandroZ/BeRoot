@@ -318,6 +318,34 @@ If `/sbin/getcap` is present on the filesystem, capabilities on all binaries loc
 
 This idea comes from 0xrick's [write up](https://0xrick.github.io/hack-the-box/waldo/).
 
+Here are more [examples](https://book.hacktricks.xyz/linux-unix/privilege-escalation/linux-capabilities).
+
+
+Mounted docker socket
+----
+
+If the **docker socket is mounted** inside the docker container, you will be able to escape from it.
+Search the socket, usually on `/run/docker.sock` or `/var/run/docker.sock`. 
+If one exists, take a look at [this](https://book.hacktricks.xyz/linux-unix/privilege-escalation/docker-breakout).
+
+If the socket is witable, you could use [taitor](https://github.com/liamg/traitor).
+
+Container privilege
+----
+
+//Not implemented, should be check manually.//
+
+If you are inside a container launched with too much privileges, check what you can do. 
+Interesting container privileges: 
+	- privileged
+	- hostpid
+	- hostnetwork
+	- hostipc
+	- hostpath
+
+Take a look on these examples: 
+	* https://labs.bishopfox.com/tech-blog/bad-pods-kubernetes-pod-privilege-escalation
+	* https://github.com/BishopFox/badPods
 
 Ptrace Scope
 ----
