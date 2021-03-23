@@ -328,7 +328,7 @@ If the **docker socket is mounted** inside the docker container, you will be abl
 Search the socket, usually on `/run/docker.sock` or `/var/run/docker.sock`. 
 If one exists, take a look at [this](https://book.hacktricks.xyz/linux-unix/privilege-escalation/docker-breakout).
 
-If the socket is witable, you could use [taitor](https://github.com/liamg/traitor).
+If the socket is witable, you could use [traitor](https://github.com/liamg/traitor).
 
 Container privilege
 ----
