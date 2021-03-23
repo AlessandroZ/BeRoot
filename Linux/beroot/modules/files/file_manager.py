@@ -20,7 +20,7 @@ class FileManager(object):
         self.path_pattern = re.compile(r"^[\'\"]?(?:/[^/]+)*[\'\"]?$")
         self.subfiles = []  # Tab of PathInFile object
         if self.file.is_readable() and check_inside:
-            self.subfiles = self.parse_file(path)
+            self.subfiles = self._parse_file(path)
 
     def extract_paths_from_string(self, string):
         """
@@ -52,7 +52,7 @@ class FileManager(object):
                         break
         return paths
 
-    def parse_file(self, path):
+    def _parse_file(self, path):
         """
         Try to find paths inside a file using regex
         """

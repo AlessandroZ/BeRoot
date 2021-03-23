@@ -35,7 +35,7 @@ class InterestingFiles(object):
             '/etc/apache2/apache2.conf',
             '/var/spool/cron/crontabs/root',
         ]
-        print('Getting permissions of sensitive files. Could take some time...')
+        print('Getting permissions of sensitive files.')
         self.properties = self._get_permissions(self.files)
 
     def _get_permissions(self, paths):
@@ -59,7 +59,7 @@ class InterestingFiles(object):
 
         return properties
 
-    def write_access_on_subfiles(self, f_info, user):
+    def _write_access_on_subfiles(self, f_info, user):
         has_write_access = []
         for subfiles in f_info.subfiles:
             for subfile in subfiles.paths:
@@ -89,7 +89,7 @@ class InterestingFiles(object):
 
             subfiles = []
             if p.file.is_readable(user):
-                subfiles = self.write_access_on_subfiles(p, user)
+                subfiles = self._write_access_on_subfiles(p, user)
 
             # Should be an executable (check if dirname is writable)
             if p.file.is_not_ascii:

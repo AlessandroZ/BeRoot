@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .modules.exploit import Exploit
+from .modules.docker import Docker
 from .modules.users import Users
 from .modules.services import Services
 from .modules.suid import SuidBins
@@ -9,9 +11,10 @@ from .modules.gtfobins import GTFOBins
 from .modules.sudo.sudoers_file import SudoersFile
 from .modules.sudo.sudo_list import SudoList
 from .modules.useful.useful import tab_of_dict_to_string, tab_to_string
-from .checks.checks import (
-    check_sudoers_misconfigurations, is_docker_installed, check_nfs_root_squashing,
-    get_capabilities, get_exploits, check_python_library_hijacking, get_ptrace_scope
+from .modules.sudoers import check_sudoers_misconfigurations
+from .modules.fast_checks import (
+    get_capabilities, get_ptrace_scope,
+    check_nfs_root_squashing, check_python_library_hijacking, 
 )
 
 
@@ -25,6 +28,8 @@ class RunChecks(object):
         self.sudofile = SudoersFile()
         self.sudolist = SudoList(password)
         self.suids = SuidBins(self.gtfobins)
+
+    # ------------------------ Files misconfigurations ------------------------
 
     def file_permissions(self):
         """
@@ -44,6 +49,8 @@ class RunChecks(object):
             tab_of_dict_to_string(self.services.write_access_on_binpath(self.current_user))
         )
 
+    # ------------------------ Suid binaries ------------------------
+
     def suid_bins(self):
         """
         List Suid bins
@@ -56,6 +63,8 @@ class RunChecks(object):
                 title=False,
             )
         )
+
+    # ------------------------ Sudo misconfigurations ------------------------
 
     def sudoers_misconfiguration(self):
         """
@@ -86,14 +95,36 @@ class RunChecks(object):
             self.sudolist.dirty_check(),
         )
 
+    def ldpreload(self):
+        """
+        Check if LD_PRELOAD has been found in env_keep directive (sudoers rules)
+        """
+        return (
+            'LD_PRELOAD',
+            'Directive found' if self.sudofile.ld_preload or self.sudolist.ld_preload else False
+        )
+
+    # ------------------------ Docker misconfigurations ------------------------
+
     def docker_installed(self):
         """
         Check if docker is present
         """
         return (
             'Docker',
-            is_docker_installed(),
+            Docker().is_docker_installed(),
         )
+
+    def docker_mounted_sockets(self):
+        """
+        Check if docker is present
+        """
+        return (
+            'Mounted docker socket',
+            tab_of_dict_to_string(Docker().find_mounted_socket(self.current_user)),
+        )
+
+    # ------------------------ NFS Root Squashing ------------------------
 
     def nfs_root_squashing(self):
         """
@@ -104,14 +135,7 @@ class RunChecks(object):
             check_nfs_root_squashing(),
         )
 
-    def ldpreload(self):
-        """
-        Check if LD_PRELOAD has been found in env_keep directive (sudoers rules)
-        """
-        return (
-            'LD_PRELOAD',
-            'Directive found' if self.sudofile.ld_preload or self.sudolist.ld_preload else False
-        )
+    # ------------------------ Capabilities ------------------------
 
     def capabilities(self):
         """
@@ -122,6 +146,8 @@ class RunChecks(object):
             get_capabilities()
         )
 
+    # ------------------------ Python Lib Hijacking ------------------------
+
     def python_library_hijacking(self):
         """
         Python Library Hijacking
@@ -130,6 +156,8 @@ class RunChecks(object):
             'Writable Python Library Directory',
             tab_to_string(check_python_library_hijacking(self.current_user)),
         )
+
+    # ------------------------ Ptrace ------------------------
 
     def ptrace_scope(self):
         """
@@ -140,13 +168,15 @@ class RunChecks(object):
             get_ptrace_scope()
         )
 
+    # ------------------------ Exploits ------------------------
+
     def exploits(self):
         """
         Run Linux exploit suggester
         """
         return (
             'Exploits',
-            get_exploits()
+            Exploit().run()
         )
 
 
@@ -180,12 +210,13 @@ def run(password, to_print=True):
         checks.sudo_list,
         checks.sudo_dirty_check,
         checks.docker_installed,
+        checks.docker_mounted_sockets,
         checks.nfs_root_squashing,
         checks.ldpreload,
         checks.capabilities,
         checks.ptrace_scope,
         checks.exploits,
-        checks.python_library_hijacking,
+        checks.python_library_hijacking
     ]
 
     for c in to_checks:
