@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import sys
 import subprocess
 
 from .files.files import File
@@ -60,7 +61,11 @@ class SuidBins:
             # system call detected
             cmd = 'strings %s' % binary
             out, _ = run_cmd(cmd)
-            for line in out.split('\n'):
+            for line in out.split(b'\n'):
+
+                if not isinstance(line, str):
+                    line = line.decode(sys.getfilesystemencoding())
+
                 for string in line.split():
                     if not string.startswith('/') and self._is_built_in_bin(string):
                         results.append('%s -> %s'% (line, string))
@@ -96,7 +101,7 @@ class SuidBins:
                 perm = '[writable]'
 
             values = {'suid': '%s %s' % (suid.path, perm)}
-            shell_escape = self.gtfobins.find_binary(suid.basename) 
+            shell_escape = self.gtfobins.find_binary(suid.basename)
             if shell_escape:
                 escapes = shell_escape.split('\n')
                 values['[+] gtfobins found'] = escapes
