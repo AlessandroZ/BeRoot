@@ -22,7 +22,7 @@ Here is an example of a well-known binary:
 sudo awk 'BEGIN {system("/bin/sh")}'
 ```
 
-__Note__: If you have more binary example, do not hesitate to open an issue explaining the technic and I will add it on the list. 
+__Note__: If you have more binary examples, do not hesitate to open an issue explaining the technique and I will add it in the list. 
 
 Having sudo access on these binaries do not mean you could always manage to execute commands on the system. For example, using the __mount__ binary with a limited user could give you the following well known error, if it's well configured:  
 
@@ -74,13 +74,13 @@ So depending on which binary and how the wildcard are used, the exploitation can
 user@host:~$ cat test.sh 
 tar cf archive.tar *.txt
 ```
-Thus, using a tool to detect these misconfigurations is very difficult. A manually analyse should be done to check if it's a false positive or not. 
+Thus, using a tool to detect these misconfigurations is very difficult. A manual analysis should be done to check if it's a false positive or not. 
 
 
 Sensitive files 
 ----
 
-Lots of file are run with high permissions on the system (e.g cron files, services, etc.). Here is an example of intersting directories and files:
+Lots of file are run with high permissions on the system (e.g cron files, services, etc.). Here is an example of interesting directories and files:
 ```
 /etc/init.d
 /etc/cron.d 
@@ -129,9 +129,9 @@ Suid binaries
 
 SUID (Set owner User ID up on execution) is a special type of file permissions given to a file. SUID is defined as giving temporary permissions to a user to run a program/file with the permissions of the file owner rather that the user who runs it. So if suid file is owned by root, you should execute it using root privilege. 
 
-BeRoot prints all suid files because a manually analyse should be done on each binary. However, it realizes some actions: 
+BeRoot prints all suid files because a manual analysis should be done on each binary. However, it realizes some actions: 
 * checks if we have write permissions on these binary (why not ? :))
-* checks if a GTFOBins is used as suid to be able to execute system commands using it (remember you could have suid GTFOBins without beeing able to exectute commands - checks GTFOBins section with the false positive example using __mount__). 
+* checks if a GTFOBins is used as suid to be able to execute system commands using it (remember you could have suid GTFOBins without being able to execute commands - checks GTFOBins section with the false positive example using __mount__). 
 * checks if system function (from libc) is used. If so, try to check if a bin is called without using an absolute path (some false positive could occurs in this check). For more information check the PATH environment variable section.  
 * checks if an exec function (from libc) is used. If so, try to find a file with writable access. 
    
@@ -271,7 +271,7 @@ Why is it possible ? On the [documentation](https://www.sudo.ws/man/1.8.17/sudoe
 ```By default, if the NOPASSWD tag is applied to any of the entries for a user on the current host, he or she will be able to run "sudo -l" without a password. [...] This behavior may be overridden via the verifypw and listpw options```
 
 However, these rules only affect the current user, so if user impersonation is possible (using su) `sudo -l` should be launched from this user as well. \
-BeRoot collects all these rules from all possible user an realize exaclty the same tests as listed perviously (e.g sudoers file method).
+BeRoot collects all these rules from all possible users and run exactly the same tests as listed previously (e.g sudoers file method).
 
 Be careful ! If the user does not have the directive `NOPASSWD` in one of his rules, we cannot list sudo rules without his user password. 
 
@@ -328,7 +328,7 @@ If the **docker socket is mounted** inside the docker container, you will be abl
 Search the socket, usually on `/run/docker.sock` or `/var/run/docker.sock`. 
 If one exists, take a look at [this](https://book.hacktricks.xyz/linux-unix/privilege-escalation/docker-breakout).
 
-If the socket is witable, you could use [traitor](https://github.com/liamg/traitor).
+If the socket is writable, you could use [traitor](https://github.com/liamg/traitor).
 
 Container privilege
 ----
@@ -367,13 +367,13 @@ From the [documentation](https://www.kernel.org/doc/html/v4.14/admin-guide/LSM/Y
 Exploit
 ----
 
-Because lots of server are vulnerable to well known exploit (dirtycow, etc.), I have embeeded [linux-exploit-suggester](https://github.com/mzet-/linux-exploit-suggester) to give an overview of potential CVE that affect the kernel (this module will only work for Linux systems). 
+Because lots of server are vulnerable to well known exploit (dirtycow, etc.), I have embedded [linux-exploit-suggester](https://github.com/mzet-/linux-exploit-suggester) to give an overview of potential CVE that affect the kernel (this module will only work for Linux systems). 
 
 
 Monitoring
 ----
 
-Monitoring could be useful to detect what's running on the system. Beroot does not that but it's possible to list some processes from other users, cron jobs, etc whithout needed root privileges. This could be done using [pspy](https://github.com/DominicBreuker/pspy).
+Monitoring could be useful to detect what's running on the system. Beroot does not that but it's possible to list some processes from other users, cron jobs, etc without needing root privileges. This could be done using [pspy](https://github.com/DominicBreuker/pspy).
 
 
 Interesting write up 
