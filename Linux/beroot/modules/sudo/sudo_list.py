@@ -74,13 +74,13 @@ class SudoList(object):
 
             pattern = re.compile(
                 r"\s*" +
-                "runasusers:\s*(?P<runasusers>\w*)" +
-                "\s*" +
-                "(runasgroups:\s*(?P<runasgroups>\w*))*" +
-                "\s*" +
-                "(options:\s*(?P<options>[\!\w]*))*" +
-                "\s*" +
-                "(commands:\s*(?P<commands>.*))*",
+                "runasusers:\\s*(?P<runasusers>\\w*)" +
+                "\\s*" +
+                "(runasgroups:\\s*(?P<runasgroups>\\w*))*" +
+                "\\s*" +
+                "(options:\\s*(?P<options>[\\!\\w]*))*" +
+                "\\s*" +
+                "(commands:\\s*(?P<commands>.*))*",
                 re.DOTALL
             )
             m = pattern.search(sudo_rule)
