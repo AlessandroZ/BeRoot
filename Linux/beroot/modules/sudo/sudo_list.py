@@ -4,6 +4,7 @@ import os
 import random
 import re
 import string
+import subprocess
 import tempfile
 import traceback
 
@@ -55,6 +56,15 @@ class SudoList(object):
 
         return self.all_rules
 
+    def get_current_username(self):
+        """Return the current username using the whoami command."""
+        try:
+            result = subprocess.run(['whoami'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            return result.stdout.strip()  # Strip to remove any trailing newline
+        except Exception as e:
+            print(f"Error getting username: {e}")
+            return None
+
     def _parse_sudo_list(self, sudo_list):
         """
         Parse sudo -ll output
@@ -65,7 +75,9 @@ class SudoList(object):
         if 'LD_PRELOAD' in sudo_list:
             self.ld_preload = True
 
-        user = sudo_list[sudo_list.index('User '):].split(' ')[1]
+        user = self.get_current_username()
+        if not user:
+            raise ValueError("Could not determine the current username.")
         sudoers_entries = sudo_list.lower().split('sudoers entry')
         for sudo_rule in sudoers_entries:
 
